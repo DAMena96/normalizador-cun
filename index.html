@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CUN – Normalizador Sin Gestión</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<link rel="stylesheet" href="assets/css/styles.css">
+</head>
+<body>
+<div id="ov" onclick="closeAll()"></div>
+
+
+<header>
+  <div class="brand-mark">CUN</div>
+  <div>
+    <h1>App Normalizador Contact CUN</h1>
+    <span>Normaliza, filtra y distribuye bases de leads · catálogos JSON editables</span>
+  </div>
+</header>
+
+
+
+<!-- SELECTOR INICIAL -->
+<section id="selector-home" class="selector-home">
+  <div class="hero">
+    <div class="hero-content">
+      <div class="cun-logo-text">
+        <div class="cun-word">cun</div>
+        <div class="cun-divider"></div>
+        <div class="cun-full-name">
+          Corporación Unificada<br>
+          Nacional de Educación<br>
+          Superior
+        </div>
+      </div>
+
+      <div class="hero-eyebrow">Bienvenido a</div>
+      <h2 class="hero-title">App Normalizador <span>Contact CUN</span></h2>
+      <div class="hero-line"></div>
+      <p class="hero-subtitle">
+        Normaliza, filtra y distribuye tus bases de leads de forma
+        <strong>rápida, precisa y confiable.</strong>
+      </p>
+    </div>
+
+    <div class="version-pill">🛡️ Versión 2.2</div>
+  </div>
+
+  <h2 class="selector-title">¿Qué base deseas trabajar hoy?</h2>
+
+  <div class="selector-options">
+    <article class="module-card available">
+      <div class="module-ribbon">DISPONIBLE</div>
+      <div class="module-icon">📂</div>
+      <h3>Base Sin Gestión</h3>
+      <p>Carga tu archivo de leads sin gestión, normaliza, filtra, distribuye y exporta.</p>
+      <div class="card-sep"></div>
+      <button class="module-action" onclick="selectModule('sin-gestion')">Ingresar →</button>
+    </article>
+
+    <article class="module-card soon-blue interested-active">
+      <div class="module-ribbon">DISPONIBLE</div>
+      <div class="module-icon">⭐</div>
+      <h3>Base de Interesados</h3>
+      <p>Gestiona y normaliza la base de interesados de manera inteligente.</p>
+      <div class="card-sep"></div>
+      <button class="module-action interested" onclick="selectModule('interesados')">Ingresar →</button>
+    </article>
+
+    <article class="module-card soon-teal no-contact-active">
+      <div class="module-ribbon">DISPONIBLE</div>
+      <div class="module-icon">📞</div>
+      <h3>Base No Contactado</h3>
+      <p>Trabaja tu base de no contactados, clasifica registros y mejora tu alcance.</p>
+      <div class="card-sep"></div>
+      <button class="module-action interested" onclick="selectModule('no-contactado')">Ingresar →</button>
+    </article>
+  
+    <article class="module-card recibos-active">
+      <div class="module-ribbon">DISPONIBLE</div>
+      <div class="module-icon">🧾</div>
+      <h3>Recibos CARE AI</h3>
+      <p>Genera distribución CARI AI y notas desde la base de recibos.</p>
+      <div class="card-sep"></div>
+      <button class="module-action recibos" onclick="selectModule('recibos')">Ingresar →</button>
+    </article>
+  </div>
+
+  <div class="feature-strip">
+    <div class="feature-item"><div class="fi">🛡️</div><div><strong>Datos seguros</strong><span>Información organizada y protegida</span></div></div>
+    <div class="feature-item"><div class="fi">🔎</div><div><strong>Normalización inteligente</strong><span>Catálogos JSON editables</span></div></div>
+    <div class="feature-item"><div class="fi">📊</div><div><strong>Reportes y métricas</strong><span>KPIs en tiempo real</span></div></div>
+    <div class="feature-item"><div class="fi">👥</div><div><strong>Distribución eficiente</strong><span>Asignación balanceada entre asesores</span></div></div>
+  </div>
+</section>
+
+
+<!-- UPLOAD -->
+
+<section id="sin-gestion-topbar" class="interesados-module hidden">
+  <div class="module-topbar">
+    <button id="back-home-btn" class="app-back-inline" onclick="backHome()">← Volver al inicio</button>
+    <div>
+      <h2>📁 Base Sin Gestión</h2>
+      <p>Normaliza, filtra, revisa la base y distribuye los registros filtrados.</p>
+    </div>
+  </div>
+</section>
+
+
+<div id="upload-zone" class="hidden"
+     onclick="document.getElementById('file-input').click()"
+     ondrop="handleDrop(event)"
+     ondragover="ev=>{ev.preventDefault();document.getElementById('upload-zone').classList.add('over');}"
+     ondragleave="document.getElementById('upload-zone').classList.remove('over')">
+  <div class="icon">📂</div>
+  <h2>Arrastra aquí el archivo o haz clic para seleccionarlo</h2>
+  <p>Sube la base Sin Gestión (.xlsx)</p>
+  <input type="file" id="file-input" accept=".xlsx,.xls" onchange="loadFile(this.files[0])">
+</div>
+<div id="progress-wrap">
+  <div id="progress-bar"><div id="progress-fill"></div></div>
+  <div id="progress-label">Procesando…</div>
+</div>
+
+<!-- KPIs -->
+<div id="kpi-row" class="hidden">
+  <div class="kpi"><div class="val" id="k-total">0</div><div class="lbl">Total registros</div></div>
+  <div class="kpi v"><div class="val" id="k-pres">0</div><div class="lbl">Presencial</div></div>
+  <div class="kpi a"><div class="val" id="k-virt">0</div><div class="lbl">Virtual</div></div>
+  <div class="kpi p"><div class="val" id="k-pos">0</div><div class="lbl">Posgrado</div></div>
+  <div class="kpi r"><div class="val" id="k-err">0</div><div class="lbl">Núm. errado / sin núm.</div></div>
+  <div class="kpi r"><div class="val" id="k-dup">0</div><div class="lbl">Duplicados</div></div>
+</div>
+
+<!-- TABS -->
+<div class="tabs" id="tabs" style="display:none">
+  <div class="tab active" onclick="switchTab(0)">🔍 Filtros y Normalización</div>
+  <div class="tab" onclick="switchTab(1)">👥 Distribución de Leads</div>
+  <div class="tab" onclick="switchTab(2)">🤖 Distribución CARI AI</div>
+  <div class="tab" onclick="switchTab(3)">📝 Notas CARI AI</div>
+</div>
+
+<!-- TAB 0 -->
+<div class="tab-panel active" id="tp-0">
+  <div id="sg-owner-summary-wrap" class="sg-owner-summary-wrap" style="display:none"></div>
+
+  <div id="filter-panel">
+    <div class="filter-card">
+      <h3>🔍 Filtros — uno o varios valores por campo</h3>
+      <div class="filter-row" id="filter-row"></div>
+    </div>
+  </div>
+  <div id="table-wrap">
+    <div class="tbl-hdr">
+      <h3 id="tbl-title">Registros normalizados</h3>
+      <div class="tbl-acts">
+        <button class="btn btn-green"   onclick="exportFiltered()">⬇ Exportar filtrado</button>
+        <button class="btn btn-primary" onclick="exportAll()">⬇ Exportar todo</button>
+        <button class="btn btn-orange"  onclick="copiarIDs()">📋 Copiar IDs</button>
+      </div>
+    </div>
+    <div id="tbl-container">
+      <table><thead id="tbl-head"></thead><tbody id="tbl-body"></tbody></table>
+      <div id="pag-wrap">
+        <button onclick="changePage(-1)">‹ Ant</button>
+        <span id="pag-info"></span>
+        <button onclick="changePage(1)">Sig ›</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 1 -->
+<div class="tab-panel" id="tp-1">
+  <div class="card2">
+    <h2><span class="step-n">1</span> Leads a distribuir</h2>
+    <p>Se usarán los registros del filtro activo de la pestaña anterior.</p>
+    <div id="dist-info" style="font-size:.84rem;color:var(--verde);font-weight:600;"></div>
+  </div>
+  <div class="card2">
+    <h2><span class="step-n">2</span> Carga el Excel de asesores <span style="color:var(--rojo);font-size:.8rem">*obligatorio</span></h2>
+    <p>Columna requerida: <strong>Correo</strong> o <strong>Email</strong>. Se repartirán equitativamente.</p>
+    <div class="two-col">
+      <div>
+        <div class="upload-box2"
+             onclick="document.getElementById('asesores-file').click()"
+             ondrop="dropAs(event)"
+             ondragover="ev=>{ev.preventDefault();this.style.background='#f0fff6'}"
+             ondragleave="this.style.background=''">
+          📧 Arrastra el Excel de asesores o haz clic
+          <br><small style="font-weight:400;color:#999">Columna: Correo / Email</small>
+        </div>
+        <input type="file" id="asesores-file" accept=".xlsx,.xls" onchange="loadAsesores(this.files[0])" style="display:none">
+      </div>
+      <div id="asesores-tags" style="padding-top:4px;"></div>
+    </div>
+  </div>
+  <div class="card2">
+    <h2><span class="step-n">3</span> Distribuir y exportar</h2>
+    <div class="acts">
+      <button class="btn btn-primary" onclick="distribuir()">⚡ Distribuir</button>
+      <button class="btn btn-green"   onclick="exportarDist()">⬇ Exportar distribución</button>
+    </div>
+    <div id="stat-box" class="stat-box" style="display:none"></div>
+  </div>
+  <div id="dist-preview" style="padding:0 20px 20px;display:none;overflow:auto;max-height:360px;background:white;">
+    <table id="dist-tbl" style="width:100%;border-collapse:collapse;font-size:.73rem;"></table>
+  </div>
+
+  <div class="card2 detalle-asesor-card" id="sg-detalle-asesor-card">
+    <h2><span class="step-n">4</span> Detalle asesor por mentor</h2>
+    <p>Después de distribuir, aquí aparecerá el resumen agrupado por mentor y asesor.</p>
+    <div id="sg-detalle-asesor" class="detalle-empty">Primero distribuye los leads para ver el detalle por mentor y asesor.</div>
+  </div>
+
+
+
+
+
+</div>
+
+
+<!-- MÓDULO BASE DE INTERESADOS -->
+<section id="interesados-module" class="interesados-module hidden">
+  <div class="module-topbar">
+    <button class="app-back-inline" onclick="backHome()">← Volver al inicio</button>
+    <div>
+      <h2>⭐ Base de Interesados</h2>
+      <p>Genera primero el predictivo, revisa la base normalizada y distribuye los registros filtrados.</p>
+    </div>
+  </div>
+
+  <div id="inter-upload-zone" class="upload-zone-interesados"
+       onclick="document.getElementById('inter-file-input').click()"
+       ondrop="handleDropInteresados(event)"
+       ondragover="event.preventDefault();this.classList.add('over')"
+       ondragleave="this.classList.remove('over')">
+    <div class="icon">⭐</div>
+    <h2>Arrastra aquí la Base de Interesados o haz clic para seleccionarla</h2>
+    <p>Sube el archivo Excel (.xlsx / .xls)</p>
+    <input type="file" id="inter-file-input" accept=".xlsx,.xls" onchange="loadInteresadosFile(this.files[0])">
+  </div>
+
+  <div id="inter-progress-wrap" class="inter-progress-wrap">
+    <div class="inter-progress-bar"><div id="inter-progress-fill"></div></div>
+    <div id="inter-progress-label">Procesando…</div>
+  </div>
+
+  <div id="inter-kpi-row" class="inter-kpi-row hidden">
+    <div class="kpi"><div class="val" id="ik-total">0</div><div class="lbl">Total interesados</div></div>
+    <div class="kpi v"><div class="val" id="ik-pred">0</div><div class="lbl">Registros predictivo</div></div>
+    <div class="kpi a"><div class="val" id="ik-virt">0</div><div class="lbl">Virtual</div></div>
+    <div class="kpi p"><div class="val" id="ik-pres">0</div><div class="lbl">Presencial</div></div>
+    <div class="kpi r"><div class="val" id="ik-sin">0</div><div class="lbl">Sin programa / ciudad</div></div>
+  </div>
+
+  <div id="inter-tabs" class="tabs hidden">
+    <div class="tab active" onclick="switchInterTab(0)">🤖 Predictivo</div>
+    <div class="tab" onclick="switchInterTab(1)">⭐ Base Interesados</div>
+    <div class="tab" onclick="switchInterTab(2)">👥 Distribución de Leads</div>
+  </div>
+
+  <div class="tab-panel active inter-panel hidden" id="inter-tp-0">
+    <div id="pred-filter-panel">
+      <div class="filter-card">
+        <h3>🔍 Filtros — Predictivo</h3>
+        <p class="filter-help">El predictivo usa los mismos filtros de Base Interesados: Área válida, VAL y Fecha creación.</p>
+        <div class="filter-row pred-filter-row-note">
+          <button class="btn btn-primary" onclick="switchInterTab(1)">Ir a filtros</button>
+          <span>Aplica los filtros y esta tabla se actualiza automáticamente.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tbl-hdr">
+      <h3 id="pred-title">Predictivo</h3>
+      <div class="tbl-acts">
+        <button class="btn btn-green" onclick="exportPredictivo()">⬇ Exportar predictivo</button>
+        <button class="btn btn-orange" onclick="copiarPredictivoContactIds()">📋 Copiar CONTACTID</button>
+      </div>
+    </div>
+
+    <div class="predictivo-note">
+      Campos generados: CONTACTID, Prioridad, email, First_name, telefono, Programa, number 1, AgentName.
+    </div>
+
+    <div class="inter-table-container">
+      <table><thead id="pred-head"></thead><tbody id="pred-body"></tbody></table>
+      <div class="pag-wrap-inter">
+        <button onclick="changePredPage(-1)">‹ Ant</button>
+        <span id="pred-pag-info"></span>
+        <button onclick="changePredPage(1)">Sig ›</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel inter-panel hidden" id="inter-tp-1">
+    <div id="inter-filter-panel">
+      <div class="filter-card">
+        <h3>🔍 Filtros — Base de Interesados</h3>
+        <div class="filter-row" id="inter-filter-row"></div>
+      </div>
+    </div>
+
+    <div class="tbl-hdr">
+      <h3 id="inter-title">Base de Interesados normalizada</h3>
+      <div class="tbl-acts">
+        <button class="btn btn-green" onclick="exportInterFiltered()">⬇ Exportar filtrado</button>
+        <button class="btn btn-primary" onclick="exportInterAll()">⬇ Exportar todo</button>
+        <button class="btn btn-orange" onclick="copiarInterIDs()">📋 Copiar IDs</button>
+      </div>
+    </div>
+
+    <div class="inter-table-container">
+      <table><thead id="inter-head"></thead><tbody id="inter-body"></tbody></table>
+      <div class="pag-wrap-inter">
+        <button onclick="changeInterPage(-1)">‹ Ant</button>
+        <span id="inter-pag-info"></span>
+        <button onclick="changeInterPage(1)">Sig ›</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel inter-panel hidden" id="inter-tp-2">
+    <div class="card2">
+      <h2><span class="step-n">1</span> Leads a distribuir</h2>
+      <p>Se usarán los registros del filtro activo de la pestaña anterior, igual que en Base Sin Gestión.</p>
+      <div id="inter-dist-info" style="font-size:.84rem;color:var(--cun-verde);font-weight:700;"></div>
+    </div>
+
+    <div class="card2">
+      <h2><span class="step-n">2</span> Carga el Excel de asesores <span style="color:var(--rojo);font-size:.8rem">*obligatorio</span></h2>
+      <p>Columna requerida: <strong>Correo</strong> o <strong>Email</strong>. Se repartirán equitativamente.</p>
+      <div class="two-col">
+        <div>
+          <div class="upload-box2"
+               onclick="document.getElementById('inter-asesores-file').click()"
+               ondrop="dropInterAsesores(event)"
+               ondragover="event.preventDefault();this.style.background='#f0fff6'"
+               ondragleave="this.style.background=''">
+            📧 Arrastra el Excel de asesores o haz clic
+            <br><small style="font-weight:400;color:#999">Columna: Correo / Email</small>
+          </div>
+          <input type="file" id="inter-asesores-file" accept=".xlsx,.xls" onchange="loadInterAsesores(this.files[0])" style="display:none">
+        </div>
+        <div id="inter-asesores-tags" style="padding-top:4px;"></div>
+      </div>
+    </div>
+
+    <div class="card2">
+      <h2><span class="step-n">3</span> Distribuir y exportar</h2>
+      <div class="acts">
+        <button class="btn btn-primary" onclick="distribuirInteresados()">⚡ Distribuir</button>
+        <button class="btn btn-green" onclick="exportarDistInteresados()">⬇ Exportar distribución</button>
+        <button class="btn btn-orange" onclick="copiarInterDistIDs()">📋 Copiar IDs distribución</button>
+      </div>
+      <div id="inter-stat-box" class="stat-box" style="display:none"></div>
+    </div>
+    <div id="inter-dist-preview" style="padding:0 20px 20px;display:none;overflow:auto;max-height:360px;background:white;">
+      <table id="inter-dist-tbl" style="width:100%;border-collapse:collapse;font-size:.73rem;"></table>
+    </div>
+
+  <div class="card2 detalle-asesor-card" id="inter-detalle-asesor-card">
+    <h2><span class="step-n">4</span> Detalle asesor por supervisor</h2>
+    <p>Después de distribuir, aquí aparecerá el resumen agrupado por supervisor y asesor.</p>
+    <div id="inter-detalle-asesor" class="detalle-empty">Primero distribuye los leads para ver el detalle por supervisor y asesor.</div>
+  </div>
+
+
+
+
+
+  </div>
+</section>
+
+
+
+<!-- MÓDULO BASE NO CONTACTADO -->
+<section id="no-contactado-module" class="interesados-module hidden">
+  <div class="module-topbar">
+    <button class="app-back-inline" onclick="backHome()">← Volver al inicio</button>
+    <div>
+      <h2>📞 Base No Contactado</h2>
+      <p>Genera predictivo, normaliza base no contactada y distribuye leads filtrados.</p>
+    </div>
+  </div>
+
+  <div id="nc-upload-zone" class="upload-zone-interesados"
+       onclick="document.getElementById('nc-file-input').click()"
+       ondrop="handleDropNC(event)"
+       ondragover="event.preventDefault();this.classList.add('over')"
+       ondragleave="this.classList.remove('over')">
+    <div class="icon">📞</div>
+    <h2>Arrastra aquí la Base No Contactado o haz clic para seleccionarla</h2>
+    <p>Sube el archivo Excel (.xlsx / .xls)</p>
+    <input type="file" id="nc-file-input" accept=".xlsx,.xls" onchange="loadNCFile(this.files[0])">
+  </div>
+
+  <div id="nc-progress-wrap" class="inter-progress-wrap">
+    <div class="inter-progress-bar"><div id="nc-progress-fill"></div></div>
+    <div id="nc-progress-label">Procesando…</div>
+  </div>
+
+  <div id="nc-kpi-row" class="inter-kpi-row hidden">
+    <div class="kpi"><div class="val" id="nk-total">0</div><div class="lbl">Total no contactado</div></div>
+    <div class="kpi v"><div class="val" id="nk-pred">0</div><div class="lbl">Registros predictivo</div></div>
+    <div class="kpi a"><div class="val" id="nk-virt">0</div><div class="lbl">Virtual</div></div>
+    <div class="kpi p"><div class="val" id="nk-pres">0</div><div class="lbl">Presencial</div></div>
+    <div class="kpi r"><div class="val" id="nk-sin">0</div><div class="lbl">Sin programa / ciudad</div></div>
+  </div>
+
+  <div id="nc-tabs" class="tabs hidden">
+    <div class="tab active" onclick="switchNCTab(0)">🤖 Predictivo</div>
+    <div class="tab" onclick="switchNCTab(1)">📞 Base No Contactado</div>
+    <div class="tab" onclick="switchNCTab(2)">👥 Distribución de Leads</div>
+    <div class="tab" onclick="switchNCTab(3)">🤖 Distribución CARI AI</div>
+    <div class="tab" onclick="switchNCTab(4)">📝 Notas CARI AI</div>
+  </div>
+
+  <div class="tab-panel active nc-panel hidden" id="nc-tp-0">
+    <div class="filter-card">
+      <h3>🔍 Filtros — Predictivo</h3>
+      <p class="filter-help">El predictivo usa los mismos filtros de Base No Contactado: Área válida, VAL y Fecha creación.</p>
+      <div class="filter-row pred-filter-row-note">
+        <button class="btn btn-primary" onclick="switchNCTab(1)">Ir a filtros</button>
+        <span>Aplica los filtros y esta tabla se actualiza automáticamente.</span>
+      </div>
+    </div>
+    <div class="tbl-hdr">
+      <h3 id="nc-pred-title">Predictivo</h3>
+      <div class="tbl-acts">
+        <button class="btn btn-green" onclick="exportNCPredictivo()">⬇ Exportar predictivo</button>
+        <button class="btn btn-orange" onclick="copiarNCPredictivoContactIds()">📋 Copiar CONTACTID</button>
+      </div>
+    </div>
+    <div class="predictivo-note">Campos generados: CONTACTID, Prioridad, email, First_name, telefono, Programa, number 1, AgentName.</div>
+    <div class="inter-table-container">
+      <table><thead id="nc-pred-head"></thead><tbody id="nc-pred-body"></tbody></table>
+      <div class="pag-wrap-inter">
+        <button onclick="changeNCPredPage(-1)">‹ Ant</button>
+        <span id="nc-pred-pag-info"></span>
+        <button onclick="changeNCPredPage(1)">Sig ›</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel nc-panel hidden" id="nc-tp-1">
+    <div class="filter-card">
+      <h3>🔍 Filtros — Base No Contactado</h3>
+      <div class="filter-row" id="nc-filter-row"></div>
+    </div>
+    <div class="tbl-hdr">
+      <h3 id="nc-title">Base No Contactado normalizada</h3>
+      <div class="tbl-acts">
+        <button class="btn btn-green" onclick="exportNCFiltered()">⬇ Exportar filtrado</button>
+        <button class="btn btn-primary" onclick="exportNCAll()">⬇ Exportar todo</button>
+        <button class="btn btn-orange" onclick="copiarNCIDs()">📋 Copiar IDs</button>
+      </div>
+    </div>
+    <div class="inter-table-container">
+      <table><thead id="nc-head"></thead><tbody id="nc-body"></tbody></table>
+      <div class="pag-wrap-inter">
+        <button onclick="changeNCPage(-1)">‹ Ant</button>
+        <span id="nc-pag-info"></span>
+        <button onclick="changeNCPage(1)">Sig ›</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel nc-panel hidden" id="nc-tp-2">
+    <div class="card2">
+      <h2><span class="step-n">1</span> Leads a distribuir</h2>
+      <p>Se usarán los registros del filtro activo de la pestaña anterior.</p>
+      <div id="nc-dist-info" style="font-size:.84rem;color:var(--cun-verde);font-weight:700;"></div>
+    </div>
+    <div class="card2">
+      <h2><span class="step-n">2</span> Carga el Excel de asesores <span style="color:var(--rojo);font-size:.8rem">*obligatorio</span></h2>
+      <p>Columna requerida: <strong>Correo</strong> o <strong>Email</strong>. Se repartirán equitativamente.</p>
+      <div class="two-col">
+        <div>
+          <div class="upload-box2" onclick="document.getElementById('nc-asesores-file').click()" ondrop="dropNCAsesores(event)" ondragover="event.preventDefault();this.style.background='#f0fff6'" ondragleave="this.style.background=''">
+            📧 Arrastra el Excel de asesores o haz clic
+            <br><small style="font-weight:400;color:#999">Columna: Correo / Email</small>
+          </div>
+          <input type="file" id="nc-asesores-file" accept=".xlsx,.xls" onchange="loadNCAsesores(this.files[0])" style="display:none">
+        </div>
+        <div id="nc-asesores-tags" style="padding-top:4px;"></div>
+      </div>
+    </div>
+    <div class="card2">
+      <h2><span class="step-n">3</span> Distribuir y exportar</h2>
+      <div class="acts">
+        <button class="btn btn-primary" onclick="distribuirNC()">⚡ Distribuir</button>
+        <button class="btn btn-green" onclick="exportarDistNC()">⬇ Exportar distribución</button>
+        <button class="btn btn-orange" onclick="copiarNCDistIDs()">📋 Copiar IDs distribución</button>
+      </div>
+      <div id="nc-stat-box" class="stat-box" style="display:none"></div>
+    </div>
+    <div id="nc-dist-preview" style="padding:0 20px 20px;display:none;overflow:auto;max-height:360px;background:white;">
+      <table id="nc-dist-tbl" style="width:100%;border-collapse:collapse;font-size:.73rem;"></table>
+    </div>
+
+  <div class="card2 detalle-asesor-card" id="nc-detalle-asesor-card">
+    <h2><span class="step-n">4</span> Detalle asesor por supervisor</h2>
+    <p>Después de distribuir, aquí aparecerá el resumen agrupado por supervisor y asesor.</p>
+    <div id="nc-detalle-asesor" class="detalle-empty">Primero distribuye los leads para ver el detalle por supervisor y asesor.</div>
+  </div>
+
+
+
+
+
+  </div>
+
+  <div class="tab-panel nc-panel hidden" id="nc-tp-3">
+    <div class="card2">
+      <h2><span class="step-n">1</span> Distribución CARI AI</h2>
+      <p>Se genera con los registros filtrados de Base No Contactado.</p>
+      <div id="nc-cari-info" style="font-size:.84rem;color:var(--cun-verde);font-weight:700;"></div>
+    </div>
+    <div class="card2">
+      <h2><span class="step-n">2</span> Exportar base CARI AI</h2>
+      <p>Campos: numero_telefono, nombre_aspirante, carrera_interes, identificacion, correo_electronico, telefono_adicional, periodo y campania.</p>
+      <div class="acts">
+        <button class="btn btn-primary" onclick="renderNCCari()">👁️ Ver CARI AI</button>
+        <button class="btn btn-green" onclick="exportNCCari()">⬇ Exportar CARI AI</button>
+      </div>
+    </div>
+    <div id="nc-cari-preview" style="padding:0 20px 20px;display:none;overflow:auto;max-height:520px;background:white;">
+      <table id="nc-cari-tbl" style="width:100%;border-collapse:collapse;font-size:.73rem;"></table>
+    </div>
+  </div>
+
+  <div class="tab-panel nc-panel hidden" id="nc-tp-4">
+    <div class="card2">
+      <h2><span class="step-n">1</span> Notas CARI AI</h2>
+      <p>Se genera una nota fija para cada ID filtrado.</p>
+      <div id="nc-notas-info" style="font-size:.84rem;color:var(--cun-verde);font-weight:700;"></div>
+    </div>
+    <div class="card2">
+      <h2><span class="step-n">2</span> Exportar notas</h2>
+      <p>Campos: ID y Notes. La nota siempre será: <strong>Se intenta contacto con el aspirante via CARI AI</strong></p>
+      <div class="acts">
+        <button class="btn btn-primary" onclick="renderNCNotas()">👁️ Ver notas</button>
+        <button class="btn btn-green" onclick="exportNCNotas()">⬇ Exportar notas</button>
+        <button class="btn btn-orange" onclick="copiarNCNotasIDs()">📋 Copiar IDs notas</button>
+      </div>
+    </div>
+    <div id="nc-notas-preview" style="padding:0 20px 20px;display:none;overflow:auto;max-height:520px;background:white;">
+      <table id="nc-notas-tbl" style="width:100%;border-collapse:collapse;font-size:.73rem;"></table>
+    </div>
+  </div>
+</section>
+
+
+<!-- MÓDULO RECIBOS CARE AI -->
+<section id="recibos-module" class="interesados-module hidden">
+  <div class="module-topbar">
+    <button class="app-back-inline" onclick="backHome()">← Volver al inicio</button>
+    <div>
+      <h2>🧾 Recibos — Solo CARI AI y Notas</h2>
+      <p>Genera archivo CARI AI y notas desde la base de recibos.</p>
+    </div>
+  </div>
+
+  <div id="rec-upload-zone" class="upload-zone-interesados"
+       onclick="document.getElementById('rec-file-input').click()"
+       ondrop="handleDropRecibos(event)"
+       ondragover="event.preventDefault();this.classList.add('over')"
+       ondragleave="this.classList.remove('over')">
+    <div class="icon">🧾</div>
+    <h2>Arrastra aquí la Base Recibos o haz clic para seleccionarla</h2>
+    <p>Sube el archivo Excel (.xlsx / .xls)</p>
+    <input type="file" id="rec-file-input" accept=".xlsx,.xls" onchange="loadRecibosFile(this.files[0])">
+  </div>
+
+  <div id="rec-progress-wrap" class="inter-progress-wrap">
+    <div class="inter-progress-bar"><div id="rec-progress-fill"></div></div>
+    <div id="rec-progress-label">Procesando…</div>
+  </div>
+
+  <div id="rec-kpi-row" class="inter-kpi-row hidden">
+    <div class="kpi"><div class="val" id="rk-total">0</div><div class="lbl">Total recibos</div></div>
+    <div class="kpi v"><div class="val" id="rk-ok">0</div><div class="lbl">Teléfono OK</div></div>
+    <div class="kpi r"><div class="val" id="rk-err">0</div><div class="lbl">Sin número / errado</div></div>
+    <div class="kpi a"><div class="val" id="rk-cari">0</div><div class="lbl">Registros CARI AI</div></div>
+  </div>
+
+  <div id="rec-tabs" class="tabs hidden">
+    <div class="tab active" onclick="switchRecTab(0)">🤖 Distribución CARI AI</div>
+    <div class="tab" onclick="switchRecTab(1)">📝 Notas CARI AI</div>
+  </div>
+
+  <div class="tab-panel active rec-panel hidden" id="rec-tp-0">
+    <div id="rec-filter-panel">
+      <div class="filter-card">
+        <h3>🔍 Filtros — Recibos CARI AI</h3>
+        <div class="filter-row" id="rec-filter-row"></div>
+      </div>
+    </div>
+
+    <div class="tbl-hdr">
+      <h3 id="rec-cari-title">Distribución CARI AI</h3>
+      <div class="tbl-acts">
+        <button class="btn btn-primary" onclick="renderRecCari()">👁️ Ver CARI AI</button>
+        <button class="btn btn-green" onclick="exportRecCari()">⬇ Exportar CARI AI</button>
+      </div>
+    </div>
+
+    <div id="rec-cari-preview" style="padding:0 20px 20px;overflow:auto;max-height:620px;background:white;">
+      <table id="rec-cari-tbl" style="width:100%;border-collapse:collapse;font-size:.73rem;"></table>
+      <div class="pag-wrap-inter">
+        <button onclick="changeRecCariPage(-1)">‹ Ant</button>
+        <span id="rec-cari-pag-info"></span>
+        <button onclick="changeRecCariPage(1)">Sig ›</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-panel rec-panel hidden" id="rec-tp-1">
+    <div class="card2">
+      <h2><span class="step-n">1</span> Notas CARI AI</h2>
+      <p>Genera una nota fija para cada ID filtrado.</p>
+      <div id="rec-notas-info" style="font-size:.84rem;color:var(--cun-verde);font-weight:700;"></div>
+    </div>
+    <div class="card2">
+      <h2><span class="step-n">2</span> Exportar notas</h2>
+      <p>La nota siempre será: <strong>Se intenta contacto con el aspirante via CARI AI</strong></p>
+      <div class="acts">
+        <button class="btn btn-primary" onclick="renderRecNotas()">👁️ Ver notas</button>
+        <button class="btn btn-green" onclick="exportRecNotas()">⬇ Exportar notas</button>
+        <button class="btn btn-orange" onclick="copiarRecNotasIDs()">📋 Copiar IDs notas</button>
+      </div>
+    </div>
+    <div id="rec-notas-preview" style="padding:0 20px 20px;display:none;overflow:auto;max-height:520px;background:white;">
+      <table id="rec-notas-tbl" style="width:100%;border-collapse:collapse;font-size:.73rem;"></table>
+    </div>
+  </div>
+</section>
+
+
+<!-- TAB 2: CARI AI SIN GESTIÓN -->
+<div class="tab-panel" id="tp-2">
+  <div class="card2">
+    <h2><span class="step-n">1</span> Distribución CARI AI</h2>
+    <p>Se genera con los registros filtrados de Base Sin Gestión.</p>
+    <div id="sg-cari-info" style="font-size:.84rem;color:var(--cun-verde);font-weight:700;"></div>
+  </div>
+
+  <div class="card2">
+    <h2><span class="step-n">2</span> Exportar base CARI AI</h2>
+    <p>Campos: numero_telefono, nombre_aspirante, carrera_interes, identificacion, correo_electronico, telefono_adicional, periodo y campania.</p>
+    <div class="acts">
+      <button class="btn btn-primary" onclick="renderSGCari()">👁️ Ver CARI AI</button>
+      <button class="btn btn-green" onclick="exportSGCari()">⬇ Exportar CARI AI</button>
+    </div>
+  </div>
+
+  <div id="sg-cari-preview" style="padding:0 20px 20px;display:none;overflow:auto;max-height:520px;background:white;">
+    <table id="sg-cari-tbl" style="width:100%;border-collapse:collapse;font-size:.73rem;"></table>
+  </div>
+</div>
+
+<!-- TAB 3: NOTAS CARI AI SIN GESTIÓN -->
+<div class="tab-panel" id="tp-3">
+  <div class="card2">
+    <h2><span class="step-n">1</span> Notas CARI AI</h2>
+    <p>Se genera una nota fija para cada ID filtrado.</p>
+    <div id="sg-notas-info" style="font-size:.84rem;color:var(--cun-verde);font-weight:700;"></div>
+  </div>
+
+  <div class="card2">
+    <h2><span class="step-n">2</span> Exportar notas</h2>
+    <p>La nota siempre será: <strong>Se intenta contacto con el aspirante via CARI AI</strong></p>
+    <div class="acts">
+      <button class="btn btn-primary" onclick="renderSGNotas()">👁️ Ver notas</button>
+      <button class="btn btn-green" onclick="exportSGNotas()">⬇ Exportar notas</button>
+      <button class="btn btn-orange" onclick="copiarSGNotasIDs()">📋 Copiar IDs notas</button>
+    </div>
+  </div>
+
+  <div id="sg-notas-preview" style="padding:0 20px 20px;display:none;overflow:auto;max-height:520px;background:white;">
+    <table id="sg-notas-tbl" style="width:100%;border-collapse:collapse;font-size:.73rem;"></table>
+  </div>
+</div>
+
+<div id="toast"></div>
+<script src="assets/js/01-maps.js"></script>
+<script src="assets/js/02-state.js"></script>
+<script src="assets/js/03-normalizer.js"></script>
+<script src="assets/js/04-loader.js"></script>
+<script src="assets/js/05-tabs-filters.js"></script>
+<script src="assets/js/06-kpis-table.js"></script>
+<script src="assets/js/07-export.js"></script>
+<script src="assets/js/08-distribution.js"></script>
+<script src="assets/js/09-ui.js"></script>
+<script src="assets/js/10-interesados.js"></script>
+<script src="assets/js/11-no-contactado.js"></script>
+<script src="assets/js/12-recibos.js"></script>
+<script src="assets/js/19-ajustes-finales-sin-gestion.js"></script>
+<script src="assets/js/20-ajustes-interesados-no-contactado.js"></script>
+<script src="assets/js/21-uniformidad-final-detalle.js"></script>
+<script src="assets/js/22-restaurar-botones-detalle.js"></script>
+<script src="assets/js/23-ajustes-solicitados-final.js"></script>
+</body>
+</html>
