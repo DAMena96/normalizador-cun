@@ -177,7 +177,7 @@
     const summaryH = 86;
     const rowH = 34;
     const footerH = 44;
-    const height = Math.max(460, titleH + summaryH + footerH + rows.length * rowH + 30);
+    const height = Math.max(460, titleH + summaryH + 38 + rows.length * rowH + footerH + 60);
 
     const canvas = document.createElement('canvas');
     canvas.width = width * scale;
