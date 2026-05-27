@@ -296,7 +296,7 @@
     const ws = XLSX.utils.json_to_sheet(rows, { header: cols });
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Distribucion');
-    XLSX.writeFile(wb, filename + '_' + Date.now() + '.xlsx');
+    XLSX.writeFile(wb, filename + '.xlsx');
     showToast(`⬇ ${rows.length.toLocaleString()} asignaciones exportadas`);
   }
 
@@ -408,11 +408,13 @@
   };
 
   window.exportarDistInteresados = function(){
-    exportDistExcel((typeof interDistribuidoData !== 'undefined' ? interDistribuidoData : []), 'Distribucion_Interesados_ID_Asesor');
+    const fn = 'ASIGNACIÓN ' + (typeof getDateStamp==='function'?getDateStamp():'') + ' INTER' + (typeof getInterFileLabel==='function'?getInterFileLabel():'');
+    exportDistExcel((typeof interDistribuidoData !== 'undefined' ? interDistribuidoData : []), fn);
   };
 
   window.exportarDistNC = function(){
-    exportDistExcel((typeof ncDistribuidoData !== 'undefined' ? ncDistribuidoData : []), 'Distribucion_No_Contactado_ID_Asesor');
+    const fn = 'ASIGNACIÓN ' + (typeof getDateStamp==='function'?getDateStamp():'') + ' NOCONTAC' + (typeof getNCFileLabel==='function'?getNCFileLabel():'');
+    exportDistExcel((typeof ncDistribuidoData !== 'undefined' ? ncDistribuidoData : []), fn);
   };
 
   const originalDistribuirInter = window.distribuirInteresados;

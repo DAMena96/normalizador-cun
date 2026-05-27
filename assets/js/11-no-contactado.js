@@ -28,7 +28,7 @@ const NC_SHOW_COLS = [
   'FECHA CREACION','Hora de modificación','Campaña mercadeo','Periodo','Creado por'
 ];
 
-const NC_PRED_COLS = ['CONTACTID','Prioridad','email','First_name','telefono','Programa','number 1','AgentName'];
+const NC_PRED_COLS = ['CONTACTID','Prioridad','email','First_name','telefono','Programa','number 1','AgentName','ValCorreo'];
 
 const NC_FILTER_DEFS = [
   {id:'nc-area-valida', col:'AREA VALIDA', lbl:'Área válida'},
@@ -59,12 +59,15 @@ async function loadNCFile(file){
   if(!okCatalogs){ ncHideProg(); return; }
 
   ncShowProg(15,'Leyendo archivo…');
+  const isCSV = /\.csv$/i.test(file.name);
   const reader = new FileReader();
   reader.onload = ev => {
-    ncShowProg(35,'Parseando Excel…');
+    ncShowProg(35, isCSV ? 'Parseando CSV…' : 'Parseando Excel…');
     setTimeout(()=>{
       try{
-        const wb = XLSX.read(ev.target.result,{type:'array'});
+        const wb = isCSV
+          ? XLSX.read(ev.target.result, {type:'string', raw:false})
+          : XLSX.read(ev.target.result, {type:'array'});
         const sn = wb.SheetNames[0];
         const json = XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:'',raw:false});
         if(json.length < 2){ showToast('Sin datos en la base no contactado.'); ncHideProg(); return; }
@@ -113,7 +116,8 @@ async function loadNCFile(file){
       }
     },30);
   };
-  reader.readAsArrayBuffer(file);
+  if(isCSV) reader.readAsText(file, 'UTF-8');
+  else reader.readAsArrayBuffer(file);
 }
 
 function normalizeNCRow(row, headers){
@@ -168,18 +172,21 @@ function getNCProgramaPredictivoFromRow(r){
   return toNCTitle(src || 'Sin programa');
 }
 
-function buildNCPredictivoRow(r){
+function buildNCPredictivoRow(r, counter){
   const tel = normalizarTelefono(r['Teléfono']);
-  const programa = getNCProgramaPredictivoFromRow(r);
+  const rawEmail = String(r['Correo electrónico'] || '').trim();
+  const validEmail = /^[A-Za-z0-9@._\-,]+$/.test(rawEmail) ? rawEmail : '';
+  const programa = (String(r['Programa de interes_'] || r['Programa'] || '').trim() || 'SIN PROGRAMA').toUpperCase();
   return {
-    'CONTACTID': r['ID de registro'] || '',
-    'Prioridad': 1,
-    'email': r['Correo electrónico'] || '',
+    'CONTACTID' : counter,
+    'Prioridad' : 1,
+    'email'     : validEmail,
     'First_name': getNCFirstName(r['Nombre completo']),
-    'telefono': tel,
-    'Programa': programa,
-    'number 1': tel ? '+579' + tel : '',
-    'AgentName': ''
+    'telefono'  : tel,
+    'Programa'  : programa,
+    'number 1'  : tel ? '+579' + tel : '',
+    'AgentName' : typeof getAsesorEmail === 'function' ? getAsesorEmail(r['Propietario de Posible Cliente']) : '',
+    'ValCorreo' : validEmail ? 'VALIDADO' : 'CORREO INVÁLIDO'
   };
 }
 
@@ -341,7 +348,7 @@ function renderNCKPIs(){
   document.getElementById('nk-sin').textContent = d.filter(r=>['SIN PROGRAMA',''].includes(r['PROGRAMA NORMALIZADO']) || ['SIN CIUDAD',''].includes(r['CIUDAD'])).length.toLocaleString();
 }
 
-function getNCPredictivoFiltrado(){ return ncFiltered.map(buildNCPredictivoRow); }
+function getNCPredictivoFiltrado(){ return ncFiltered.map(function(r, idx){ return buildNCPredictivoRow(r, idx + 1); }); }
 
 function renderNCPredictivo(){
   document.getElementById('nc-pred-head').innerHTML = '<tr>'+NC_PRED_COLS.map(c=>`<th>${c}</th>`).join('')+'</tr>';
@@ -480,7 +487,7 @@ function exportarDistNC(){
   const ws=XLSX.utils.json_to_sheet(rows);
   const wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,ws,'Distribucion');
-  XLSX.writeFile(wb,'Distribucion_No_Contactado_'+Date.now()+'.xlsx');
+  XLSX.writeFile(wb, 'ASIGNACIÓN ' + (typeof getDateStamp==='function'?getDateStamp():'') + ' NOCONTAC' + (typeof getNCFileLabel==='function'?getNCFileLabel():'') + '.xlsx');
   showToast(`⬇ ${ncDistribuidoData.length.toLocaleString()} asignaciones exportadas`);
 }
 function copiarNCDistIDs(){
@@ -612,7 +619,7 @@ function exportNCCari(){
   }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'CARI AI');
-  XLSX.writeFile(wb, 'Distribucion_CARI_AI_' + Date.now() + '.xlsx');
+  XLSX.writeFile(wb, 'NO CONTACTADOS_' + (typeof getDateStamp==='function'?getDateStamp():'') + '.xlsx');
   showToast(`⬇ ${rows.length.toLocaleString()} registros CARI AI exportados`);
 }
 
@@ -626,7 +633,7 @@ function exportNCNotas(){
   }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Notas');
-  XLSX.writeFile(wb, 'Notas_CARI_AI_' + Date.now() + '.xlsx');
+  XLSX.writeFile(wb, 'ASIGNACIÓN ' + (typeof getDateStamp==='function'?getDateStamp():'') + ' NOCONTAC' + (typeof getNCFileLabel==='function'?getNCFileLabel():'') + '.xlsx');
   showToast(`⬇ ${rows.length.toLocaleString()} notas exportadas`);
 }
 

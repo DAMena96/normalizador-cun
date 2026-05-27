@@ -13,12 +13,15 @@ async function loadFile(file){
   const okCatalogs = await catalogsReady;
   if(!okCatalogs){ hideProg(); return; }
   showProg(10,'Leyendo archivo…');
+  const isCSV = /\.csv$/i.test(file.name);
   const reader=new FileReader();
   reader.onload=ev=>{
-    showProg(30,'Parseando Excel…');
+    showProg(30, isCSV ? 'Parseando CSV…' : 'Parseando Excel…');
     setTimeout(()=>{
       try{
-        const wb=XLSX.read(ev.target.result,{type:'array'});
+        const wb = isCSV
+          ? XLSX.read(ev.target.result, {type:'string', raw:false})
+          : XLSX.read(ev.target.result, {type:'array'});
 
         const sn=wb.SheetNames.find(s=>/SIN\s*GESTI/i.test(s))||wb.SheetNames[0];
         const json=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:'',raw:false});
@@ -47,12 +50,14 @@ async function loadFile(file){
             buildFilterPanel();
             populateFilters();
             renderKPIs(); renderTable();
+            if(typeof renderSGPredictivo === 'function') renderSGPredictivo();
             hideProg();
             document.getElementById('upload-zone').classList.add('hidden');
             document.getElementById('kpi-row').classList.remove('hidden');
             document.getElementById('tabs').style.display='flex';
             document.getElementById('filter-panel').style.display='block';
             document.getElementById('table-wrap').style.display='block';
+            if(typeof switchTab === 'function') switchTab(0);
             showToast(`✅ ${allData.length.toLocaleString()} registros normalizados con JSON · `+
               `${Object.keys(MAP_PROGRAMA).length} programas · `+
               `${Object.keys(MAP_CIUDAD).length} ciudades`);
@@ -61,7 +66,8 @@ async function loadFile(file){
       }catch(err){showToast('Error: '+err.message);hideProg();console.error(err);}
     },30);
   };
-  reader.readAsArrayBuffer(file);
+  if(isCSV) reader.readAsText(file, 'UTF-8');
+  else reader.readAsArrayBuffer(file);
 }
 function showProg(p,m){
   document.getElementById('progress-wrap').style.display='block';

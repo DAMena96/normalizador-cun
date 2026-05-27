@@ -100,7 +100,7 @@ function exportarDist(){
   const ws = XLSX.utils.json_to_sheet(rows, { header: cols });
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Distribuido');
-  XLSX.writeFile(wb, 'Leads_Distribuidos_ID_Asesor_' + Date.now() + '.xlsx');
+  XLSX.writeFile(wb, 'ASIGNACIÓN ' + (typeof getDateStamp==='function'?getDateStamp():'') + ' SG' + (typeof getSGFileLabel==='function'?getSGFileLabel():'') + '.xlsx');
   showToast(`⬇ ${rows.length.toLocaleString()} leads exportados`);
 }
 

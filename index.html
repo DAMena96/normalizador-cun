@@ -111,7 +111,7 @@
   <div class="icon">📂</div>
   <h2>Arrastra aquí el archivo o haz clic para seleccionarlo</h2>
   <p>Sube la base Sin Gestión (.xlsx)</p>
-  <input type="file" id="file-input" accept=".xlsx,.xls" onchange="loadFile(this.files[0])">
+  <input type="file" id="file-input" accept=".xlsx,.xls,.csv" onchange="loadFile(this.files[0])">
 </div>
 <div id="progress-wrap">
   <div id="progress-bar"><div id="progress-fill"></div></div>
@@ -130,14 +130,45 @@
 
 <!-- TABS -->
 <div class="tabs" id="tabs" style="display:none">
-  <div class="tab active" onclick="switchTab(0)">🔍 Filtros y Normalización</div>
-  <div class="tab" onclick="switchTab(1)">👥 Distribución de Leads</div>
-  <div class="tab" onclick="switchTab(2)">🤖 Distribución CARI AI</div>
-  <div class="tab" onclick="switchTab(3)">📝 Notas CARI AI</div>
+  <div class="tab active" onclick="switchTab(0)">📊 Predictivo</div>
+  <div class="tab" onclick="switchTab(1)">📂 Base sin gestión</div>
+  <div class="tab" onclick="switchTab(2)">👥 Distribución de Leads</div>
+  <div class="tab" onclick="switchTab(3)">🤖 Distribución CARI AI</div>
+  <div class="tab" onclick="switchTab(4)">📝 Notas CARI AI</div>
 </div>
 
-<!-- TAB 0 -->
-<div class="tab-panel active" id="tp-0">
+<!-- TAB 0: PREDICTIVO SIN GESTIÓN (panel movido aquí para ser el primero) -->
+<div class="tab-panel" id="tp-4">
+  <div class="filter-card" style="margin:18px 20px 0;">
+    <h3>📊 Predictivo — Base Sin Gestión</h3>
+    <p style="margin:.3rem 0 .7rem;font-size:.84rem;color:#555">
+      Usa los mismos filtros de la pestaña <strong>Base sin gestión</strong>.
+      Aplica filtros y esta tabla se actualiza automáticamente.
+    </p>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <button class="btn btn-primary" onclick="switchTab(1)">← Ir a filtros</button>
+      <span style="font-size:.8rem;color:#888">CONTACTID · Prioridad · email · First_name · telefono · Programa · number 1 · AgentName · ValCorreo</span>
+    </div>
+  </div>
+  <div class="tbl-hdr">
+    <h3 id="sg-pred-title">Predictivo</h3>
+    <div class="tbl-acts">
+      <button class="btn btn-green"  onclick="exportSGPredictivo()">⬇ Exportar predictivo</button>
+      <button class="btn btn-orange" onclick="copiarSGPredictivoContactIds()">📋 Copiar CONTACTID</button>
+    </div>
+  </div>
+  <div class="inter-table-container">
+    <table><thead id="sg-pred-head"></thead><tbody id="sg-pred-body"></tbody></table>
+    <div class="pag-wrap-inter">
+      <button onclick="changeSGPredPage(-1)">‹ Ant</button>
+      <span id="sg-pred-pag-info"></span>
+      <button onclick="changeSGPredPage(1)">Sig ›</button>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 1: BASE SIN GESTIÓN (antes TAB 0) -->
+<div class="tab-panel" id="tp-0">
   <div id="sg-owner-summary-wrap" class="sg-owner-summary-wrap" style="display:none"></div>
 
   <div id="filter-panel">
@@ -186,7 +217,7 @@
           📧 Arrastra el Excel de asesores o haz clic
           <br><small style="font-weight:400;color:#999">Columna: Correo / Email</small>
         </div>
-        <input type="file" id="asesores-file" accept=".xlsx,.xls" onchange="loadAsesores(this.files[0])" style="display:none">
+        <input type="file" id="asesores-file" accept=".xlsx,.xls,.csv" onchange="loadAsesores(this.files[0])" style="display:none">
       </div>
       <div id="asesores-tags" style="padding-top:4px;"></div>
     </div>
@@ -235,7 +266,7 @@
     <div class="icon">⭐</div>
     <h2>Arrastra aquí la Base de Interesados o haz clic para seleccionarla</h2>
     <p>Sube el archivo Excel (.xlsx / .xls)</p>
-    <input type="file" id="inter-file-input" accept=".xlsx,.xls" onchange="loadInteresadosFile(this.files[0])">
+    <input type="file" id="inter-file-input" accept=".xlsx,.xls,.csv" onchange="loadInteresadosFile(this.files[0])">
   </div>
 
   <div id="inter-progress-wrap" class="inter-progress-wrap">
@@ -338,7 +369,7 @@
             📧 Arrastra el Excel de asesores o haz clic
             <br><small style="font-weight:400;color:#999">Columna: Correo / Email</small>
           </div>
-          <input type="file" id="inter-asesores-file" accept=".xlsx,.xls" onchange="loadInterAsesores(this.files[0])" style="display:none">
+          <input type="file" id="inter-asesores-file" accept=".xlsx,.xls,.csv" onchange="loadInterAsesores(this.files[0])" style="display:none">
         </div>
         <div id="inter-asesores-tags" style="padding-top:4px;"></div>
       </div>
@@ -391,7 +422,7 @@
     <div class="icon">📞</div>
     <h2>Arrastra aquí la Base No Contactado o haz clic para seleccionarla</h2>
     <p>Sube el archivo Excel (.xlsx / .xls)</p>
-    <input type="file" id="nc-file-input" accept=".xlsx,.xls" onchange="loadNCFile(this.files[0])">
+    <input type="file" id="nc-file-input" accept=".xlsx,.xls,.csv" onchange="loadNCFile(this.files[0])">
   </div>
 
   <div id="nc-progress-wrap" class="inter-progress-wrap">
@@ -480,7 +511,7 @@
             📧 Arrastra el Excel de asesores o haz clic
             <br><small style="font-weight:400;color:#999">Columna: Correo / Email</small>
           </div>
-          <input type="file" id="nc-asesores-file" accept=".xlsx,.xls" onchange="loadNCAsesores(this.files[0])" style="display:none">
+          <input type="file" id="nc-asesores-file" accept=".xlsx,.xls,.csv" onchange="loadNCAsesores(this.files[0])" style="display:none">
         </div>
         <div id="nc-asesores-tags" style="padding-top:4px;"></div>
       </div>
@@ -701,5 +732,6 @@
 <script src="assets/js/21-uniformidad-final-detalle.js"></script>
 <script src="assets/js/22-restaurar-botones-detalle.js"></script>
 <script src="assets/js/23-ajustes-solicitados-final.js"></script>
+<script src="assets/js/24-sg-predictivo.js"></script>
 </body>
 </html>

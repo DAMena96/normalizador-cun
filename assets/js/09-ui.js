@@ -88,7 +88,7 @@ function resetAllModuleViews(){
   if(tabs) tabs.style.display = 'none';
   const filterPanel = document.getElementById('filter-panel');
   if(filterPanel) filterPanel.style.display = 'none';
-  ['tp-0','tp-1','tp-2','tp-3'].forEach(id => {
+  ['tp-4','tp-0','tp-1','tp-2','tp-3'].forEach(id => {
     const el = document.getElementById(id);
     if(el) el.classList.remove('active');
   });

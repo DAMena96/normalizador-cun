@@ -98,19 +98,12 @@
 
   function forceSinGestionVisible(){
     const tabs = document.getElementById('tabs');
-    const tp0 = document.getElementById('tp-0');
     const filterPanel = document.getElementById('filter-panel');
     const tableWrap = document.getElementById('table-wrap');
     if(tabs) tabs.style.display = 'flex';
     if(filterPanel) filterPanel.style.display = 'block';
     if(tableWrap) tableWrap.style.display = 'block';
-
-    document.querySelectorAll('#tabs .tab').forEach((t,i)=>t.classList.toggle('active', i === 0));
-    ['tp-0','tp-1','tp-2','tp-3'].forEach((id,i)=>{
-      const el = document.getElementById(id);
-      if(el) el.classList.toggle('active', i === 0);
-    });
-    if(tp0) tp0.classList.add('active');
+    // No forzar cambio de tab aquí; switchTab(0) en 04-loader ya lo gestiona
   }
 
   function ownerRows(module){

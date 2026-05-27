@@ -229,16 +229,49 @@ function ordenarPorHoraCreacionParaDistribuir(rows){
 }
 
 
-/* Override switchTab para incluir CARI AI y Notas en Base Sin Gestión */
+/* ── Helpers para nombres de archivo ── */
+function getDateStamp(){
+  const d = new Date();
+  return String(d.getDate()).padStart(2,'0') + String(d.getMonth()+1).padStart(2,'0');
+}
+function getSGFileLabel(){
+  try{
+    const sel = typeof msSel !== 'undefined' && msSel['f-val'];
+    if(sel && sel.size === 1) return '_' + [...sel][0];
+    return '';
+  }catch(e){ return ''; }
+}
+function getInterFileLabel(){
+  try{
+    const checks = [...document.querySelectorAll('#list-if-area-valida input:checked')];
+    if(checks.length === 1) return '_' + checks[0].value;
+    return '';
+  }catch(e){ return ''; }
+}
+function getNCFileLabel(){
+  try{
+    const checks = [...document.querySelectorAll('#list-nc-area-valida input:checked')];
+    if(checks.length === 1) return '_' + checks[0].value;
+    return '';
+  }catch(e){ return ''; }
+}
+
+/* Override switchTab — nuevo orden de pestañas Sin Gestión:
+   0 = Predictivo (tp-4)
+   1 = Base sin gestión (tp-0)
+   2 = Distribución de Leads (tp-1)
+   3 = Distribución CARI AI (tp-2)
+   4 = Notas CARI AI (tp-3) */
 function switchTab(n){
   document.querySelectorAll('#tabs .tab').forEach((t,i)=>t.classList.toggle('active',i===n));
-  document.querySelectorAll('#tp-0,#tp-1,#tp-2,#tp-3').forEach((p,i)=>p.classList.toggle('active',i===n));
-  if(n===1){
+  document.querySelectorAll('#tp-4,#tp-0,#tp-1,#tp-2,#tp-3').forEach((p,i)=>p.classList.toggle('active',i===n));
+  if(n===0 && typeof renderSGPredictivo === 'function') renderSGPredictivo();
+  if(n===2){
     const el = document.getElementById('dist-info');
     if(el) el.textContent = `${filteredData.length.toLocaleString()} leads listos para distribuir (filtro activo)`;
   }
-  if(n===2) updateSGCariInfo();
-  if(n===3) updateSGNotasInfo();
+  if(n===3) updateSGCariInfo();
+  if(n===4) updateSGNotasInfo();
 }
 
 /* CARI AI + NOTAS — BASE SIN GESTIÓN */
@@ -361,7 +394,7 @@ function exportSGCari(){
   }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'CARI AI');
-  XLSX.writeFile(wb, 'Sin_Gestion_CARI_AI_' + Date.now() + '.xlsx');
+  XLSX.writeFile(wb, 'SIN GESTION_' + getDateStamp() + '.xlsx');
   showToast(`⬇ ${rows.length.toLocaleString()} registros CARI AI exportados`);
 }
 
@@ -375,7 +408,7 @@ function exportSGNotas(){
   }));
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Notas');
-  XLSX.writeFile(wb, 'Sin_Gestion_Notas_CARI_AI_' + Date.now() + '.xlsx');
+  XLSX.writeFile(wb, 'ASIGNACIÓN ' + getDateStamp() + ' SG' + getSGFileLabel() + '.xlsx');
   showToast(`⬇ ${rows.length.toLocaleString()} notas exportadas`);
 }
 

@@ -28,7 +28,7 @@ const INTER_SHOW_COLS = [
   'FECHA CREACION','Hora de modificación','Campaña mercadeo','Periodo','Creado por'
 ];
 
-const PRED_COLS = ['CONTACTID','Prioridad','email','First_name','telefono','Programa','number 1','AgentName'];
+const PRED_COLS = ['CONTACTID','Prioridad','email','First_name','telefono','Programa','number 1','AgentName','ValCorreo'];
 
 const INTER_FILTER_DEFS = [
   {id:'if-area-valida', col:'AREA VALIDA', lbl:'Área válida'},
@@ -61,13 +61,16 @@ async function loadInteresadosFile(file){
   if(!okCatalogs){ interHideProg(); return; }
 
   interShowProg(15,'Leyendo archivo…');
+  const isCSV = /\.csv$/i.test(file.name);
   const reader = new FileReader();
 
   reader.onload = ev => {
-    interShowProg(35,'Parseando Excel…');
+    interShowProg(35, isCSV ? 'Parseando CSV…' : 'Parseando Excel…');
     setTimeout(()=>{
       try{
-        const wb = XLSX.read(ev.target.result,{type:'array'});
+        const wb = isCSV
+          ? XLSX.read(ev.target.result, {type:'string', raw:false})
+          : XLSX.read(ev.target.result, {type:'array'});
         const sn = wb.SheetNames[0];
         const json = XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:'',raw:false});
 
@@ -122,7 +125,8 @@ async function loadInteresadosFile(file){
     },30);
   };
 
-  reader.readAsArrayBuffer(file);
+  if(isCSV) reader.readAsText(file, 'UTF-8');
+  else reader.readAsArrayBuffer(file);
 }
 
 function normalizeInteresadoRow(row, headers){
@@ -199,19 +203,97 @@ function getProgramaPredictivoFromRow(r){
   return toTitle(src || 'Sin programa');
 }
 
-function buildPredictivoRow(r){
-  const tel = normalizarTelefono(r['Teléfono']);
-  const programa = getProgramaPredictivoFromRow(r);
+/* ── AgentName desde "Propietario de Posible Cliente" ────────────────────────
+   Estrategia en dos pasos:
+   1. MAP_ASESOR lookup (asesores.json):
+      - Si existe un mapeo y el valor resultante es DISTINTO al original
+        → devolver exactamente ese valor (email, "Retirado", cualquier categoría).
+      - Si el valor mapeado es IGUAL al original (sin mapeo explícito) → paso 2.
+      - Si no se encontró en el mapa → paso 2.
+   2. Derivación del nombre (Vinculaciones / CUNdigitales sin email en asesores.json):
+      - Si el campo ya trae un email inline → extraerlo.
+      - Todo mayúsculas → entrada institucional → ''.
+      - Quitar prefijo conocido; con las palabras restantes construir email:
+          1 pal → nombre@cun.edu.co
+          2–3 pal → nombre_apellido1@cun.edu.co
+          4+ pal → nombre_apellido1@cun.edu.co (salteando segundo nombre)
+*/
+function getAsesorEmail(propietario){
+  if(!propietario) return '';
+  var s = String(propietario).trim();
+  if(!s) return '';
+
+  // ── Paso 1: MAP_ASESOR lookup ────────────────────────────────────────────
+  if(typeof lookup === 'function' && typeof MAP_ASESOR !== 'undefined'){
+    var mapped = lookup(MAP_ASESOR, s, null);
+    if(mapped !== null && mapped !== undefined){
+      var mappedStr = String(mapped).trim();
+      // Resultado distinto al original → mapeo explícito → devolver tal cual
+      // (email, "Retirado", categoría de proceso, etc.)
+      if(mappedStr !== s) return mappedStr;
+      // Resultado igual al original (self-map):
+      //   • Si tiene prefijo de nombre personal (Vinculaciones, Contact…) → paso 2 (derivar email)
+      //   • Si NO tiene prefijo → es una entidad conocida (CUN Digital, Telecampus…) → devolver tal cual
+      var hasPersonPrefix = /^(?:Vinculaciones|Vinculacion|Contact|Contatc|CUNdigitales?)\s/i.test(s);
+      if(!hasPersonPrefix) return mappedStr;
+      // Tiene prefijo → caer a derivación de nombre
+    }
+  }
+
+  // ── Paso 2: Derivación del nombre ────────────────────────────────────────
+  // Si ya contiene un email directamente
+  var em = s.match(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/);
+  if(em) return em[0].toLowerCase();
+
+  // Todo mayúsculas → institucional
+  if(s === s.toUpperCase() && /^[A-Z0-9\s\-_.]+$/.test(s)) return '';
+
+  // Quitar prefijo conocido (orden de mayor a menor especificidad)
+  var prefixRE = /^(?:Vinculaciones\s+(?:Regionales|Santa\s+Marta)?\s*|Vinculacion\s+Regional\s+|CUNdigitales?\s+|Contact\s+|Contatc\s+)/i;
+  var name = s.replace(prefixRE, '').trim();
+
+  // Sin prefijo reconocido → no generamos email (evita Telecampus, Proceso, etc.)
+  if(!name || name === s) return '';
+
+  var words = name.split(/\s+/).filter(function(w){ return w.length > 0; });
+  if(!words.length) return '';
+
+  var diacRE = new RegExp('[\\u0300-\\u036f]', 'g');
+  var norm = function(w){
+    return w.normalize('NFD').replace(diacRE, '').toLowerCase().replace(/[^a-z0-9]/g, '');
+  };
+
+  var fn = norm(words[0]);
+  if(!fn) return '';
+
+  var ln = '';
+  if(words.length === 1){
+    return fn + '@cun.edu.co';
+  } else if(words.length <= 3){
+    ln = norm(words[1]);          // nombre apellido1 [apellido2]
+  } else {
+    ln = norm(words[2]);          // nombre 2doNombre apellido1 [apellido2]
+  }
+
+  return ln ? fn + '_' + ln + '@cun.edu.co' : fn + '@cun.edu.co';
+}
+
+function buildPredictivoRow(r, counter){
+  var tel = normalizarTelefono(r['Teléfono']);
+  var rawEmail = String(r['Correo electrónico'] || '').trim();
+  var validEmail = /^[A-Za-z0-9@._\-,]+$/.test(rawEmail) ? rawEmail : '';
+  var programa = (String(r['Programa de interes_'] || r['Programa'] || '').trim() || 'SIN PROGRAMA').toUpperCase();
 
   return {
-    'CONTACTID': r['ID de registro'] || '',
-    'Prioridad': 1,
-    'email': r['Correo electrónico'] || '',
+    'CONTACTID' : counter,
+    'Prioridad' : 1,
+    'email'     : validEmail,
     'First_name': getFirstName(r['Nombre completo']),
-    'telefono': tel,
-    'Programa': programa,
-    'number 1': tel ? '+579' + tel : '',
-    'AgentName': ''
+    'telefono'  : tel,
+    'Programa'  : programa,
+    'number 1'  : tel ? '+579' + tel : '',
+    'AgentName' : getAsesorEmail(r['Propietario de Posible Cliente']),
+    'ValCorreo' : validEmail ? 'VALIDADO' : 'CORREO INVÁLIDO'
   };
 }
 
@@ -447,7 +529,7 @@ function renderInterKPIs(){
 }
 
 function getPredictivoFiltrado(){
-  return interFiltered.map(buildPredictivoRow);
+  return interFiltered.map(function(r, idx){ return buildPredictivoRow(r, idx + 1); });
 }
 
 function renderPredictivo(){
@@ -718,7 +800,7 @@ function exportarDistInteresados(){
   const ws = XLSX.utils.json_to_sheet(rows);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Distribucion');
-  XLSX.writeFile(wb, 'Distribucion_Interesados_' + Date.now() + '.xlsx');
+  XLSX.writeFile(wb, 'ASIGNACIÓN ' + (typeof getDateStamp==='function'?getDateStamp():'') + ' INTER' + (typeof getInterFileLabel==='function'?getInterFileLabel():'') + '.xlsx');
   showToast(`⬇ ${interDistribuidoData.length.toLocaleString()} asignaciones exportadas`);
 }
 
