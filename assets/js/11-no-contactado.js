@@ -61,44 +61,57 @@ async function loadNCFile(file){
   ncShowProg(15,'Leyendo archivo…');
   const reader = new FileReader();
   reader.onload = ev => {
-    try{
-      ncShowProg(35,'Parseando Excel…');
-      const wb = XLSX.read(ev.target.result,{type:'array'});
-      const sn = wb.SheetNames[0];
-      const json = XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:'',raw:false});
-      if(json.length < 2){ showToast('Sin datos en la base no contactado.'); ncHideProg(); return; }
-      const headers = json[0].map(h => String(h).trim());
+    ncShowProg(35,'Parseando Excel…');
+    setTimeout(()=>{
+      try{
+        const wb = XLSX.read(ev.target.result,{type:'array'});
+        const sn = wb.SheetNames[0];
+        const json = XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:'',raw:false});
+        if(json.length < 2){ showToast('Sin datos en la base no contactado.'); ncHideProg(); return; }
+        const headers = json[0].map(h => String(h).trim());
 
-      ncShowProg(60,`Normalizando ${(json.length-1).toLocaleString()} registros…`);
-      ncData = [];
-      for(let i=1;i<json.length;i++){
-        const row = json[i];
-        if(row.every(c => c === '' || c === null || c === undefined)) continue;
-        ncData.push(normalizeNCRow(row, headers));
+        ncShowProg(60,`Normalizando ${(json.length-1).toLocaleString()} registros…`);
+        setTimeout(()=>{
+          try{
+            ncData = [];
+            for(let i=1;i<json.length;i++){
+              const row = json[i];
+              if(row.every(c => c === '' || c === null || c === undefined)) continue;
+              ncData.push(normalizeNCRow(row, headers));
+            }
+
+            ncPredictivoData = ncData.map(buildNCPredictivoRow);
+            ncFiltered = [...ncData];
+
+            ncShowProg(90,'Preparando…');
+            setTimeout(()=>{
+              buildNCFilterPanel();
+              populateNCFilters();
+              renderNCKPIs();
+              renderNCPredictivo();
+              renderNCTable();
+
+              document.getElementById('nc-upload-zone').classList.add('hidden');
+              document.getElementById('nc-kpi-row').classList.remove('hidden');
+              document.getElementById('nc-tabs').classList.remove('hidden');
+              document.querySelectorAll('.nc-panel').forEach(p => p.classList.remove('hidden'));
+              switchNCTab(0);
+
+              ncHideProg();
+              showToast(`✅ ${ncData.length.toLocaleString()} registros no contactado procesados`);
+            },80);
+          }catch(err){
+            console.error(err);
+            showToast('Error No Contactado: ' + err.message);
+            ncHideProg();
+          }
+        },50);
+      }catch(err){
+        console.error(err);
+        showToast('Error No Contactado: ' + err.message);
+        ncHideProg();
       }
-
-      ncPredictivoData = ncData.map(buildNCPredictivoRow);
-      ncFiltered = [...ncData];
-
-      buildNCFilterPanel();
-      populateNCFilters();
-      renderNCKPIs();
-      renderNCPredictivo();
-      renderNCTable();
-
-      document.getElementById('nc-upload-zone').classList.add('hidden');
-      document.getElementById('nc-kpi-row').classList.remove('hidden');
-      document.getElementById('nc-tabs').classList.remove('hidden');
-      document.querySelectorAll('.nc-panel').forEach(p => p.classList.remove('hidden'));
-      switchNCTab(0);
-
-      ncHideProg();
-      showToast(`✅ ${ncData.length.toLocaleString()} registros no contactado procesados`);
-    }catch(err){
-      console.error(err);
-      showToast('Error No Contactado: ' + err.message);
-      ncHideProg();
-    }
+    },30);
   };
   reader.readAsArrayBuffer(file);
 }

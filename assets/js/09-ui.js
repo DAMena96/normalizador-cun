@@ -144,6 +144,8 @@ function backHome(){
   resetAllModuleViews();
   const home = document.getElementById('selector-home');
   if(home) home.classList.remove('hidden');
+  const toast = document.getElementById('toast');
+  if(toast) toast.classList.remove('show');
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 

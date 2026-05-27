@@ -1,4 +1,4 @@
-/* =========================================================
+﻿/* =========================================================
    UNIFORMIDAD FINAL — SIN GESTIÓN / INTERESADOS / NO CONTACTADO
    - En Distribuir y exportar quedan solo:
      ⚡ Distribuir | ⬇ Exportar distribución | 📋 Copiar IDs distribución
@@ -131,10 +131,15 @@
     const totalAsesores = new Set(rows.map(r => r.Asesor)).size;
     const totalMentores = new Set(rows.map(r => r.MENTOR)).size;
 
+    const generated = new Date().toLocaleString('es-CO', {
+      year:'numeric', month:'numeric', day:'numeric',
+      hour:'numeric', minute:'2-digit', second:'2-digit'
+    });
+
     const scale = 2;
     const width = 1200;
     const margin = 36;
-    const titleH = 78;
+    const titleH = 106;
     const summaryH = 92;
     const mentorH = 44;
     const rowH = 34;
@@ -161,7 +166,8 @@
     ctx.font = 'bold 28px Segoe UI, Arial, sans-serif';
     ctx.fillText('Detalle asesor por MENTOR', margin, 46);
     ctx.font = '14px Segoe UI, Arial, sans-serif';
-    ctx.fillText(modulo, width - 230, 46);
+    ctx.fillStyle = '#a8c4e0';
+    ctx.fillText(modulo + '  ·  Generado: ' + generated, margin, 80);
 
     const cardW = (width - margin*2 - 28) / 3;
     const cardY = titleH + 24;
@@ -220,7 +226,7 @@
 
     ctx.fillStyle = '#898D8D';
     ctx.font = '12px Segoe UI, Arial, sans-serif';
-    ctx.fillText('Generado desde App Normalizador Contact CUN', margin, height - 20);
+    ctx.fillText('Generado desde App Normalizador Contact CUN  ·  ' + generated, margin, height - 20);
 
     const link = document.createElement('a');
     link.href = canvas.toDataURL('image/jpeg', 0.95);
@@ -274,9 +280,9 @@
 
   function limpiarBotonesDistribucion(){
     const configs = [
-      { panel:'#tp-1', copiar:'copiarIdsDistribucionSGFinal()' },
-      { panel:'#inter-tp-2', copiar:'copiarInterDistIDs()' },
-      { panel:'#nc-tp-2', copiar:'copiarNCDistIDs()' }
+      { panel:'#tp-1',      copiar:'copiarIdsDistribucionSGFinal()', fotoFn:"exportDetalleDistJPG('sg')" },
+      { panel:'#inter-tp-2', copiar:'copiarInterDistIDs()',           fotoFn:"exportDetalleDistJPG('inter')" },
+      { panel:'#nc-tp-2',    copiar:'copiarNCDistIDs()',              fotoFn:"exportDetalleDistJPG('nc')" }
     ];
 
     configs.forEach(cfg => {
@@ -287,17 +293,29 @@
       const acts = card ? card.querySelector('.acts') : null;
       if(!acts) return;
 
+      // Eliminar botones viejos de detalle que NO sean btn-photo (el de la seccion 4)
       [...acts.querySelectorAll('button')].forEach(btn => {
         const text = btn.textContent || '';
-        if(/Exportar detalle/i.test(text)) btn.remove();
+        if(/Exportar detalle/i.test(text) && !btn.classList.contains('btn-photo')) btn.remove();
       });
 
-      const hasCopy = [...acts.querySelectorAll('button')].some(btn => /Copiar IDs distribución/i.test(btn.textContent || ''));
+      // Agregar Copiar IDs si no esta
+      const hasCopy = [...acts.querySelectorAll('button')].some(btn => /Copiar IDs/i.test(btn.textContent || ''));
       if(!hasCopy){
         const btn = document.createElement('button');
         btn.className = 'btn btn-orange';
         btn.setAttribute('onclick', cfg.copiar);
-        btn.textContent = '📋 Copiar IDs distribución';
+        btn.textContent = 'Copiar IDs distribucion';
+        acts.appendChild(btn);
+      }
+
+      // Agregar boton Exportar detalle JPG (paso 3) si no esta
+      const hasFoto = [...acts.querySelectorAll('button.btn-photo')].length > 0;
+      if(!hasFoto){
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-photo';
+        btn.setAttribute('onclick', cfg.fotoFn);
+        btn.textContent = 'Exportar detalle JPG';
         acts.appendChild(btn);
       }
     });

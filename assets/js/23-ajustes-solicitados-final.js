@@ -275,7 +275,8 @@
       <div class="cc-panel">
         <div class="cc-agent"><span>🎧</span><b>Contact Center</b></div>
         <div class="cc-bars"><i></i><i></i><i></i><i></i></div>
-        <div class="cc-kpis"><span>Leads</span><strong>Normalización</strong><em>Distribución inteligente</em></div>
+        <div class="cc-kpis"><span>LEADS</span><strong>Normalización</strong><em>Distribución inteligente</em></div>
+        <p class="cc-desc">Gestión eficiente de tus contactos</p>
       </div>
     `;
     hero.appendChild(visual);

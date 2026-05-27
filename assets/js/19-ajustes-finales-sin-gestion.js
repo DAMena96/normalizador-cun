@@ -182,10 +182,15 @@ function exportDetalleAsesorPNG(){
   const totalAsesores = new Set(rows.map(r => r.Asesor)).size;
   const totalMentores = new Set(rows.map(r => r.MENTOR)).size;
 
+  const generated = new Date().toLocaleString('es-CO', {
+    year:'numeric', month:'numeric', day:'numeric',
+    hour:'numeric', minute:'2-digit', second:'2-digit'
+  });
+
   const scale = 2;
   const width = 1200;
   const margin = 36;
-  const titleH = 78;
+  const titleH = 106;
   const summaryH = 92;
   const mentorH = 44;
   const rowH = 34;
@@ -212,7 +217,8 @@ function exportDetalleAsesorPNG(){
   ctx.font = 'bold 28px Segoe UI, Arial, sans-serif';
   ctx.fillText('Detalle asesor por MENTOR', margin, 46);
   ctx.font = '14px Segoe UI, Arial, sans-serif';
-  ctx.fillText('Base Sin Gestión', width - 180, 46);
+  ctx.fillStyle = '#a8c4e0';
+  ctx.fillText('Base Sin Gestion  ·  Generado: ' + generated, margin, 80);
 
   const cardW = (width - margin * 2 - 28) / 3;
   const cardY = titleH + 24;
@@ -276,15 +282,15 @@ function exportDetalleAsesorPNG(){
 
   ctx.fillStyle = '#898D8D';
   ctx.font = '12px Segoe UI, Arial, sans-serif';
-  ctx.fillText('Generado desde App Normalizador Contact CUN', margin, height - 18);
+  ctx.fillText('Generado desde App Normalizador Contact CUN  ·  ' + generated, margin, height - 18);
 
   const link = document.createElement('a');
-  link.href = canvas.toDataURL('image/png');
-  link.download = 'Detalle_Asesor_Por_Mentor_Sin_Gestion_' + Date.now() + '.png';
+  link.href = canvas.toDataURL('image/jpeg', 0.95);
+  link.download = 'Detalle_Asesor_Por_Mentor_Sin_Gestion_' + Date.now() + '.jpg';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  showToast('📸 Detalle asesor exportado en PNG');
+  showToast('Detalle asesor exportado en JPG');
 }
 
 function sgRenderResumenPropietario(){

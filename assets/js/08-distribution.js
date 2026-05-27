@@ -1255,10 +1255,15 @@ function exportDetalleAsesorPNG(){
   const totalAsesores = new Set(data.map(r => r['CORREO ASESOR ASIGNADO'] || 'Sin asesor')).size;
   const totalMentores = new Set(rows.map(r => r.MENTOR)).size;
 
+  const generated = new Date().toLocaleString('es-CO', {
+    year:'numeric', month:'numeric', day:'numeric',
+    hour:'numeric', minute:'2-digit', second:'2-digit'
+  });
+
   const scale = 2;
   const width = 1200;
   const margin = 36;
-  const titleH = 78;
+  const titleH = 106;
   const summaryH = 86;
   const mentorH = 42;
   const rowH = 34;
@@ -1287,7 +1292,8 @@ function exportDetalleAsesorPNG(){
   ctx.font = 'bold 28px Segoe UI, Arial, sans-serif';
   ctx.fillText('Detalle asesor por MENTOR', margin, 46);
   ctx.font = '14px Segoe UI, Arial, sans-serif';
-  ctx.fillText('Base Sin Gestión', width - 180, 46);
+  ctx.fillStyle = '#a8c4e0';
+  ctx.fillText('Base Sin Gestion  ·  Generado: ' + generated, margin, 80);
 
   const cardW = (width - margin*2 - 28) / 3;
   const cardY = titleH + 24;
@@ -1353,15 +1359,15 @@ function exportDetalleAsesorPNG(){
 
   ctx.fillStyle = '#898D8D';
   ctx.font = '12px Segoe UI, Arial, sans-serif';
-  ctx.fillText('Generado desde App Normalizador Contact CUN', margin, height - 18);
+  ctx.fillText('Generado desde App Normalizador Contact CUN  ·  ' + generated, margin, height - 18);
 
   const link = document.createElement('a');
-  link.href = canvas.toDataURL('image/png');
-  link.download = 'Detalle_Asesor_Por_Mentor_Sin_Gestion_' + Date.now() + '.png';
+  link.href = canvas.toDataURL('image/jpeg', 0.95);
+  link.download = 'Detalle_Asesor_Por_Mentor_Sin_Gestion_' + Date.now() + '.jpg';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  showToast('📸 Detalle asesor exportado en PNG');
+  showToast('Detalle asesor exportado en JPG');
 }
 
 function pintarDetallePorMentorSG(data){
@@ -1414,3 +1420,129 @@ function pintarDetallePorMentorSG(data){
 function renderDetalleAsesorSG(){
   pintarDetallePorMentorSG(typeof distribuidoData !== 'undefined' ? distribuidoData : []);
 }
+
+/* =========================================================
+   EXPORTAR DETALLE DISTRIBUCION JPG — Todas las bases
+   ========================================================= */
+window.exportDetalleDistJPG = function(module){
+  var LABELS   = { sg:'Base Sin Gestion', inter:'Base Interesados', nc:'Base No Contactado' };
+  var PREFIXES = { sg:'Detalle_Dist_Sin_Gestion', inter:'Detalle_Dist_Interesados', nc:'Detalle_Dist_No_Contactado' };
+
+  var label  = LABELS[module]   || module;
+  var prefix = PREFIXES[module] || 'Detalle_Dist';
+  var data   = module === 'sg'
+    ? (typeof distribuidoData      !== 'undefined' ? distribuidoData      : [])
+    : module === 'inter'
+      ? (typeof interDistribuidoData !== 'undefined' ? interDistribuidoData : [])
+      : (typeof ncDistribuidoData    !== 'undefined' ? ncDistribuidoData    : []);
+
+  if(!data.length){ showToast('Primero distribuye los leads.'); return; }
+
+  var counts = {};
+  data.forEach(function(r){
+    var a = String(r['CORREO ASESOR ASIGNADO'] || 'Sin asesor').trim() || 'Sin asesor';
+    counts[a] = (counts[a] || 0) + 1;
+  });
+  var rows = Object.entries(counts)
+    .map(function(e){ return { asesor: e[0], cantidad: e[1] }; })
+    .sort(function(a,b){ return b.cantidad - a.cantidad || a.asesor.localeCompare(b.asesor); });
+
+  var totalLeads    = data.length;
+  var totalAsesores = rows.length;
+
+  var generated = new Date().toLocaleString('es-CO', {
+    year:'numeric', month:'numeric', day:'numeric',
+    hour:'numeric', minute:'2-digit', second:'2-digit'
+  });
+
+  var scale      = 2;
+  var width      = 1200;
+  var margin     = 34;
+  var titleH     = 116;
+  var cardsH     = 90;
+  var rowH       = 34;
+  var tableHeadH = 38;
+  var footerH    = 44;
+  var height     = Math.max(480, titleH + 18 + cardsH + 18 + tableHeadH + rows.length * rowH + footerH + 16);
+
+  var canvas = document.createElement('canvas');
+  canvas.width  = width  * scale;
+  canvas.height = height * scale;
+  var ctx = canvas.getContext('2d');
+  ctx.scale(scale, scale);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, height);
+
+  ctx.fillStyle = '#0C2340';
+  ctx.fillRect(0, 0, width, titleH);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 30px Segoe UI, Arial, sans-serif';
+  ctx.fillText('Detalle Asesor', margin, 52);
+  ctx.font = '15px Segoe UI, Arial, sans-serif';
+  ctx.fillStyle = '#a8c4e0';
+  ctx.fillText(label + '  ·  Generado: ' + generated, margin, 86);
+
+  var cardY = titleH + 18;
+  var cardW = Math.floor((width - margin * 2 - 12) / 2);
+  var cardDefs = [
+    { label:'Leads distribuidos', value: totalLeads.toLocaleString() },
+    { label:'Asesores con leads', value: totalAsesores.toLocaleString() }
+  ];
+  cardDefs.forEach(function(card, i){
+    var cx = margin + i * (cardW + 12);
+    ctx.fillStyle = '#f4f8fb';
+    ctx.fillRect(cx, cardY, cardW, cardsH - 6);
+    ctx.fillStyle = '#0C2340';
+    ctx.font = 'bold 26px Segoe UI, Arial, sans-serif';
+    ctx.fillText(card.value, cx + 16, cardY + 38);
+    ctx.fillStyle = '#58677a';
+    ctx.font = '13px Segoe UI, Arial, sans-serif';
+    ctx.fillText(card.label, cx + 16, cardY + 60);
+  });
+
+  var y = cardY + cardsH + 12;
+  ctx.fillStyle = '#1B365D';
+  ctx.fillRect(margin, y, width - margin * 2, tableHeadH);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 15px Segoe UI, Arial, sans-serif';
+  ctx.fillText('Asesor', margin + 12, y + 25);
+  ctx.fillText('Cantidad leads', width - margin - 148, y + 25);
+  y += tableHeadH;
+
+  function cutTxt(text, x, yy, maxW){
+    var s = String(text || '');
+    while(ctx.measureText(s).width > maxW && s.length > 4) s = s.slice(0,-2);
+    if(s !== String(text || '')) s += '...';
+    ctx.fillText(s, x, yy);
+  }
+
+  rows.forEach(function(r, i){
+    ctx.fillStyle = i % 2 ? '#ffffff' : '#f8fafc';
+    ctx.fillRect(margin, y, width - margin * 2, rowH);
+    ctx.strokeStyle = '#e8eef5';
+    ctx.beginPath();
+    ctx.moveTo(margin, y + rowH);
+    ctx.lineTo(width - margin, y + rowH);
+    ctx.stroke();
+    ctx.fillStyle = '#2c3e50';
+    ctx.font = '14px Segoe UI, Arial, sans-serif';
+    cutTxt(r.asesor, margin + 12, y + 22, 900);
+    ctx.fillStyle = '#0C2340';
+    ctx.font = 'bold 15px Segoe UI, Arial, sans-serif';
+    ctx.fillText(r.cantidad.toLocaleString(), width - margin - 105, y + 22);
+    y += rowH;
+  });
+
+  ctx.fillStyle = '#898D8D';
+  ctx.font = '12px Segoe UI, Arial, sans-serif';
+  ctx.fillText('Generado desde App Normalizador Contact CUN  ·  ' + generated, margin, height - 18);
+
+  var link = document.createElement('a');
+  link.href     = canvas.toDataURL('image/jpeg', 0.95);
+  link.download = prefix + '_' + Date.now() + '.jpg';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  showToast('JPG de detalle exportado correctamente');
+};

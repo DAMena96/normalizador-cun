@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -12,7 +12,7 @@
 
 
 <header>
-  <div class="brand-mark">CUN</div>
+  <img src="Img/LOGOCUN.svg.png" class="header-logo" alt="CUN">
   <div>
     <h1>App Normalizador Contact CUN</h1>
     <span>Normaliza, filtra y distribuye bases de leads · catálogos JSON editables</span>
@@ -26,13 +26,7 @@
   <div class="hero">
     <div class="hero-content">
       <div class="cun-logo-text">
-        <div class="cun-word">cun</div>
-        <div class="cun-divider"></div>
-        <div class="cun-full-name">
-          Corporación Unificada<br>
-          Nacional de Educación<br>
-          Superior
-        </div>
+        <img src="Img/LOGOCUN.svg.png" class="hero-cun-logo" alt="Corporación Unificada Nacional de Educación Superior">
       </div>
 
       <div class="hero-eyebrow">Bienvenido a</div>
@@ -44,7 +38,7 @@
       </p>
     </div>
 
-    <div class="version-pill">🛡️ Versión 2.2</div>
+    <div class="version-pill">✨ Versión 2.3</div>
   </div>
 
   <h2 class="selector-title">¿Qué base deseas trabajar hoy?</h2>
@@ -88,10 +82,10 @@
   </div>
 
   <div class="feature-strip">
-    <div class="feature-item"><div class="fi">🛡️</div><div><strong>Datos seguros</strong><span>Información organizada y protegida</span></div></div>
-    <div class="feature-item"><div class="fi">🔎</div><div><strong>Normalización inteligente</strong><span>Catálogos JSON editables</span></div></div>
-    <div class="feature-item"><div class="fi">📊</div><div><strong>Reportes y métricas</strong><span>KPIs en tiempo real</span></div></div>
-    <div class="feature-item"><div class="fi">👥</div><div><strong>Distribución eficiente</strong><span>Asignación balanceada entre asesores</span></div></div>
+    <div class="feature-item"><div class="fi">✅</div><div><strong>Datos seguros</strong><span>Información organizada y protegida</span></div></div>
+    <div class="feature-item"><div class="fi">🌿</div><div><strong>Normalización inteligente</strong><span>Catálogos JSON editables y reglas de calidad</span></div></div>
+    <div class="feature-item"><div class="fi">📈</div><div><strong>Reportes y métricas</strong><span>KPIs en tiempo real para toma de decisiones</span></div></div>
+    <div class="feature-item"><div class="fi">🎯</div><div><strong>Distribución eficiente</strong><span>Asignación balanceada entre asesores</span></div></div>
   </div>
 </section>
 
@@ -202,6 +196,7 @@
     <div class="acts">
       <button class="btn btn-primary" onclick="distribuir()">⚡ Distribuir</button>
       <button class="btn btn-green"   onclick="exportarDist()">⬇ Exportar distribución</button>
+      <button class="btn btn-photo"   onclick="exportDetalleDistJPG('sg')">📸 Exportar detalle JPG</button>
     </div>
     <div id="stat-box" class="stat-box" style="display:none"></div>
   </div>
@@ -355,6 +350,7 @@
         <button class="btn btn-primary" onclick="distribuirInteresados()">⚡ Distribuir</button>
         <button class="btn btn-green" onclick="exportarDistInteresados()">⬇ Exportar distribución</button>
         <button class="btn btn-orange" onclick="copiarInterDistIDs()">📋 Copiar IDs distribución</button>
+        <button class="btn btn-photo" onclick="exportDetalleDistJPG('inter')">📸 Exportar detalle JPG</button>
       </div>
       <div id="inter-stat-box" class="stat-box" style="display:none"></div>
     </div>
@@ -495,6 +491,7 @@
         <button class="btn btn-primary" onclick="distribuirNC()">⚡ Distribuir</button>
         <button class="btn btn-green" onclick="exportarDistNC()">⬇ Exportar distribución</button>
         <button class="btn btn-orange" onclick="copiarNCDistIDs()">📋 Copiar IDs distribución</button>
+        <button class="btn btn-photo" onclick="exportDetalleDistJPG('nc')">📸 Exportar detalle JPG</button>
       </div>
       <div id="nc-stat-box" class="stat-box" style="display:none"></div>
     </div>

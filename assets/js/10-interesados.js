@@ -64,50 +64,62 @@ async function loadInteresadosFile(file){
   const reader = new FileReader();
 
   reader.onload = ev => {
-    try{
-      interShowProg(35,'Parseando Excel…');
-      const wb = XLSX.read(ev.target.result,{type:'array'});
-      const sn = wb.SheetNames[0];
-      const json = XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:'',raw:false});
+    interShowProg(35,'Parseando Excel…');
+    setTimeout(()=>{
+      try{
+        const wb = XLSX.read(ev.target.result,{type:'array'});
+        const sn = wb.SheetNames[0];
+        const json = XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:'',raw:false});
 
-      if(json.length < 2){
-        showToast('Sin datos en la base de interesados.');
+        if(json.length < 2){
+          showToast('Sin datos en la base de interesados.');
+          interHideProg();
+          return;
+        }
+
+        const headers = json[0].map(h => String(h).trim());
+        interShowProg(60,`Normalizando ${(json.length-1).toLocaleString()} interesados…`);
+        setTimeout(()=>{
+          try{
+            interData = [];
+            for(let i=1;i<json.length;i++){
+              const row = json[i];
+              if(row.every(c => c === '' || c === null || c === undefined)) continue;
+              interData.push(normalizeInteresadoRow(row, headers));
+            }
+
+            predictivoData = interData.map(buildPredictivoRow);
+            interFiltered = [...interData];
+
+            interShowProg(90,'Preparando…');
+            setTimeout(()=>{
+              buildInterFilterPanel();
+              populateInterFilters();
+              renderInterKPIs();
+              renderPredictivo();
+              renderInterTable();
+
+              document.getElementById('inter-upload-zone').classList.add('hidden');
+              document.getElementById('inter-kpi-row').classList.remove('hidden');
+              document.getElementById('inter-tabs').classList.remove('hidden');
+              document.querySelectorAll('.inter-panel').forEach(p => p.classList.remove('hidden'));
+              switchInterTab(0);
+
+              interHideProg();
+              showToast(`✅ ${interData.length.toLocaleString()} interesados procesados`);
+            },80);
+          }catch(err){
+            console.error(err);
+            showToast('Error interesados: ' + err.message);
+            interHideProg();
+          }
+        },50);
+      }catch(err){
+        console.error(err);
+        showToast('Error interesados: ' + err.message);
         interHideProg();
-        return;
       }
-
-      const headers = json[0].map(h => String(h).trim());
-      interShowProg(60,`Normalizando ${(json.length-1).toLocaleString()} interesados…`);
-
-      interData = [];
-      for(let i=1;i<json.length;i++){
-        const row = json[i];
-        if(row.every(c => c === '' || c === null || c === undefined)) continue;
-        interData.push(normalizeInteresadoRow(row, headers));
-      }
-
-      predictivoData = interData.map(buildPredictivoRow);
-      interFiltered = [...interData];
-
-      buildInterFilterPanel();
-      populateInterFilters();
-      renderInterKPIs();
-      renderPredictivo();
-      renderInterTable();
-
-      document.getElementById('inter-upload-zone').classList.add('hidden');
-      document.getElementById('inter-kpi-row').classList.remove('hidden');
-      document.getElementById('inter-tabs').classList.remove('hidden');
-      document.querySelectorAll('.inter-panel').forEach(p => p.classList.remove('hidden'));
-      switchInterTab(0);
-
-      interHideProg();
-      showToast(`✅ ${interData.length.toLocaleString()} interesados procesados`);
-    }catch(err){
-      console.error(err);
-      showToast('Error interesados: ' + err.message);
-      interHideProg();
-    }
+    },30);
   };
 
   reader.readAsArrayBuffer(file);

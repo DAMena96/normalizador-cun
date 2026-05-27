@@ -2183,3 +2183,214 @@ header span{
 .cc-bars{display:flex;gap:9px;align-items:end;height:58px;margin:18px 0 12px}.cc-bars i{display:block;width:36px;border-radius:12px 12px 5px 5px;background:linear-gradient(180deg,#005EB8,#00B388)}.cc-bars i:nth-child(1){height:24px}.cc-bars i:nth-child(2){height:42px}.cc-bars i:nth-child(3){height:56px}.cc-bars i:nth-child(4){height:34px}
 .cc-kpis span{font-size:.75rem;color:#58677a;text-transform:uppercase;font-weight:800;letter-spacing:.08em}.cc-kpis strong{display:block;color:#0C2340;font-size:1.15rem}.cc-kpis em{display:block;color:#007A33;font-style:normal;font-weight:700;font-size:.82rem;margin-top:2px}.cc-orbit{position:absolute;border-radius:999px;background:linear-gradient(135deg,rgba(132,189,0,.35),rgba(0,94,184,.20));filter:blur(.2px)}.cc-o1{width:115px;height:115px;right:185px;top:0}.cc-o2{width:82px;height:82px;right:-14px;bottom:0;background:linear-gradient(135deg,rgba(0,179,136,.30),rgba(255,205,0,.22))}
 @media(max-width:980px){.contact-center-visual{display:none}.hero{padding-right:32px!important}}
+
+
+/* ═══════════════════════════════════════════════════════
+   UI REFRESH 2.3 — Pantalla principal
+   ═══════════════════════════════════════════════════════ */
+
+/* 4 módulos en una sola fila */
+.selector-options{
+  grid-template-columns:repeat(4,minmax(195px,1fr));
+  max-width:1360px;
+  gap:18px;
+}
+.feature-strip{max-width:1360px;}
+
+@media(max-width:1100px){
+  .selector-options{grid-template-columns:repeat(2,1fr);}
+}
+@media(max-width:580px){
+  .selector-options{grid-template-columns:1fr;}
+}
+
+/* Fondo sutil por color de módulo */
+.module-card.available{
+  background:linear-gradient(160deg,#ffffff 55%,rgba(132,189,0,.06) 100%);
+}
+.module-card.interested-active{
+  background:linear-gradient(160deg,#ffffff 55%,rgba(0,94,184,.06) 100%);
+}
+.module-card.no-contact-active{
+  background:linear-gradient(160deg,#ffffff 55%,rgba(0,133,155,.06) 100%);
+}
+.module-card.recibos-active{
+  background:linear-gradient(160deg,#ffffff 55%,rgba(255,205,0,.07) 100%);
+}
+
+/* Hover con glow de color y bounce ligero */
+.module-card{
+  transition:transform .26s cubic-bezier(.22,.68,0,1.22),box-shadow .26s ease,border-color .22s;
+}
+.module-card:hover{transform:translateY(-10px) scale(1.012);}
+.module-card.available:hover{
+  box-shadow:0 30px 62px rgba(0,122,51,.19),0 0 0 2px var(--cun-lima);
+  border-color:var(--cun-lima);
+}
+.module-card.interested-active:hover{
+  box-shadow:0 30px 62px rgba(0,94,184,.19),0 0 0 2px var(--cun-blue);
+  border-color:var(--cun-blue);
+}
+.module-card.no-contact-active:hover{
+  box-shadow:0 30px 62px rgba(0,133,155,.19),0 0 0 2px var(--cun-cyan);
+  border-color:var(--cun-cyan);
+}
+.module-card.recibos-active:hover{
+  box-shadow:0 30px 62px rgba(200,160,0,.22),0 0 0 2px var(--cun-yellow);
+  border-color:var(--cun-yellow);
+}
+
+/* Ícono del módulo ligeramente mayor */
+.module-icon{width:94px;height:94px;font-size:2.55rem;}
+
+/* Botón con efecto shine al pasar el mouse */
+.module-action{position:relative;overflow:hidden;transition:transform .18s,filter .18s;}
+.module-action::after{
+  content:'';
+  position:absolute;
+  left:-80%;top:-10%;
+  width:38%;height:120%;
+  background:rgba(255,255,255,.22);
+  transform:skewX(-18deg);
+  transition:left .42s ease;
+  pointer-events:none;
+}
+.module-action:hover{transform:translateY(-2px);filter:brightness(1.07);}
+.module-action:hover::after{left:140%;}
+
+/* Version pill — pulso de brillo */
+@keyframes pillGlow{
+  0%,100%{box-shadow:0 8px 22px rgba(12,35,64,.18);}
+  50%{box-shadow:0 8px 30px rgba(132,189,0,.35),0 0 0 5px rgba(132,189,0,.09);}
+}
+.version-pill{animation:pillGlow 3.5s ease-in-out infinite;}
+
+/* ── Barras de progreso: shimmer animado ───────────── */
+@keyframes progShimmer{
+  0%{background-position:-200% center}
+  100%{background-position:200% center}
+}
+
+/* Sin Gestión */
+#progress-bar{height:9px;border-radius:999px;overflow:hidden;}
+#progress-fill{
+  background:linear-gradient(90deg,var(--cun-blue) 0%,var(--cun-teal) 33%,var(--cun-lima) 60%,var(--cun-teal) 80%,var(--cun-blue) 100%);
+  background-size:200% auto;
+  animation:progShimmer 2s linear infinite;
+  transition:width .3s ease;
+}
+#progress-label{font-size:.8rem;color:var(--cun-azul);font-weight:700;margin-top:6px;}
+
+/* Interesados / No Contactado / Recibos */
+.inter-progress-bar{height:9px;border-radius:999px;overflow:hidden;}
+#inter-progress-fill,
+#nc-progress-fill,
+#rec-progress-fill{
+  background:linear-gradient(90deg,var(--cun-blue) 0%,var(--cun-teal) 33%,var(--cun-lima) 60%,var(--cun-teal) 80%,var(--cun-blue) 100%);
+  background-size:200% auto;
+  animation:progShimmer 2s linear infinite;
+  height:100%;
+  border-radius:999px;
+  transition:width .3s ease;
+}
+#inter-progress-label,
+#nc-progress-label,
+#rec-progress-label{
+  font-size:.8rem;
+  color:var(--cun-azul);
+  font-weight:700;
+  margin-top:6px;
+}
+
+
+/* ═══════════════════════════════════════════════════════
+   INTERFAZ LIMPIA — v2.3
+   ═══════════════════════════════════════════════════════ */
+
+/* Fondo suave y limpio */
+body{
+  background:
+    radial-gradient(circle at 3% 10%,rgba(132,189,0,.09) 0 10%,transparent 22%),
+    radial-gradient(circle at 97% 7%,rgba(0,94,184,.09) 0 12%,transparent 26%),
+    #f5f7f9;
+}
+
+/* Logo en el header */
+.header-logo{
+  height:38px;
+  width:auto;
+  object-fit:contain;
+  display:block;
+}
+
+/* Logo en el hero */
+.cun-logo-text{margin-bottom:18px;}
+.hero-cun-logo{
+  height:64px;
+  width:auto;
+  max-width:290px;
+  object-fit:contain;
+  display:block;
+}
+
+/* Hero blanco y limpio con esquinas redondeadas arriba */
+.hero{
+  background:white;
+  box-shadow:0 8px 28px rgba(12,35,64,.07);
+  border:1px solid rgba(12,35,64,.07);
+  border-radius:28px 28px 0 0;
+  padding:42px 46px 148px;
+}
+.hero::before{opacity:.18;}
+
+/* Version pill verde */
+.version-pill{
+  background:linear-gradient(135deg,var(--cun-verde) 0%,var(--cun-teal) 100%);
+  border:none;
+  font-size:.86rem;
+  color:white;
+}
+
+/* Selector title: izquierda, sin solapamiento forzado */
+.selector-title{
+  text-align:left;
+  margin:22px 0 18px;
+}
+.selector-title::after{margin:8px 0 0;}
+
+/* Feature strip clara */
+.feature-strip{
+  background:linear-gradient(90deg,#ecf0f4,#eef2f6);
+  border:1px solid #dde3ea;
+  box-shadow:0 2px 12px rgba(12,35,64,.05);
+}
+.feature-item{color:#2c3e50;}
+.feature-item strong{color:#1a2d42;font-size:.93rem;}
+.feature-item span{color:#596475;opacity:1;font-size:.77rem;}
+.feature-item:nth-child(1) .fi{background:linear-gradient(135deg,var(--cun-verde),var(--cun-lima));}
+.feature-item:nth-child(2) .fi{background:linear-gradient(135deg,var(--cun-teal),var(--cun-cyan));}
+.feature-item:nth-child(3) .fi{background:linear-gradient(135deg,var(--cun-blue),var(--cun-navy));}
+.feature-item:nth-child(4) .fi{background:linear-gradient(135deg,var(--cun-yellow),#d49300);color:var(--cun-azul);}
+
+/* Barras Contact Center: verdes */
+.cc-bars i{background:linear-gradient(180deg,var(--cun-verde),var(--cun-teal))!important;}
+
+/* Descripción Contact Center */
+.cc-desc{
+  font-size:.74rem;
+  color:#667085;
+  margin-top:8px;
+  padding-top:8px;
+  border-top:1px solid rgba(12,35,64,.09);
+}
+
+/* Boton exportar detalle JPG */
+.btn-photo{
+  background:linear-gradient(90deg,var(--cun-navy),var(--cun-azul));
+  color:#fff;
+  border:none;
+}
+.btn-photo:hover{
+  background:linear-gradient(90deg,var(--cun-azul),var(--cun-navy));
+  filter:brightness(1.08);
+}
