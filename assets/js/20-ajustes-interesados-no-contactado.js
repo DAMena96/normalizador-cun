@@ -439,7 +439,7 @@
     const originalRenderInterTable = renderInterTable;
     window.renderInterTable = renderInterTable = function(){
       originalRenderInterTable();
-      renderResumenAsesorOriginal('inter', (typeof interData !== 'undefined' ? interData : []));
+      renderResumenAsesorOriginal('inter', (typeof interFiltered !== 'undefined' ? interFiltered : (typeof interData !== 'undefined' ? interData : [])));
     };
   }
 
@@ -447,15 +447,15 @@
     const originalRenderNCTable = renderNCTable;
     window.renderNCTable = renderNCTable = function(){
       originalRenderNCTable();
-      renderResumenAsesorOriginal('nc', (typeof ncData !== 'undefined' ? ncData : []));
+      renderResumenAsesorOriginal('nc', (typeof ncFiltered !== 'undefined' ? ncFiltered : (typeof ncData !== 'undefined' ? ncData : [])));
     };
   }
 
   window.renderResumenAsesorOriginalInter = function(){
-    renderResumenAsesorOriginal('inter', (typeof interData !== 'undefined' ? interData : []));
+    renderResumenAsesorOriginal('inter', (typeof interFiltered !== 'undefined' ? interFiltered : (typeof interData !== 'undefined' ? interData : [])));
   };
 
   window.renderResumenAsesorOriginalNC = function(){
-    renderResumenAsesorOriginal('nc', (typeof ncData !== 'undefined' ? ncData : []));
+    renderResumenAsesorOriginal('nc', (typeof ncFiltered !== 'undefined' ? ncFiltered : (typeof ncData !== 'undefined' ? ncData : [])));
   };
 })();

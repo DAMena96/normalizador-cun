@@ -16,19 +16,19 @@
     sg: {
       label: 'Base Sin Gestión',
       wrapId: 'sg-owner-summary-wrap',
-      getData: () => (typeof allData !== 'undefined' ? allData : []),
+      getData: () => (typeof filteredData !== 'undefined' ? filteredData : (typeof allData !== 'undefined' ? allData : [])),
       filePrefix: 'Resumen_Asesor_Original_Sin_Gestion'
     },
     inter: {
       label: 'Base Interesados',
       wrapId: 'inter-owner-summary-wrap',
-      getData: () => (typeof interData !== 'undefined' ? interData : []),
+      getData: () => (typeof interFiltered !== 'undefined' ? interFiltered : (typeof interData !== 'undefined' ? interData : [])),
       filePrefix: 'Resumen_Asesor_Original_Interesados'
     },
     nc: {
       label: 'Base No Contactado',
       wrapId: 'nc-owner-summary-wrap',
-      getData: () => (typeof ncData !== 'undefined' ? ncData : []),
+      getData: () => (typeof ncFiltered !== 'undefined' ? ncFiltered : (typeof ncData !== 'undefined' ? ncData : [])),
       filePrefix: 'Resumen_Asesor_Original_No_Contactado'
     }
   };

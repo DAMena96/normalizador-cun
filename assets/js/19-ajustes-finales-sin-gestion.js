@@ -296,7 +296,7 @@ function exportDetalleAsesorPNG(){
 function sgRenderResumenPropietario(){
   const wrap = document.getElementById('sg-owner-summary-wrap');
   if(!wrap) return;
-  const data = typeof allData !== 'undefined' ? allData : [];
+  const data = typeof filteredData !== 'undefined' ? filteredData : (typeof allData !== 'undefined' ? allData : []);
   if(!data.length){
     wrap.style.display = 'none';
     return;
