@@ -621,6 +621,132 @@ function exportPredictivo(){
   exportInterRows(getPredictivoFiltrado(), 'Predictivo_Interesados_' + Date.now() + '.xlsx', PRED_COLS);
 }
 
+/* ── Descarga CSV con BOM UTF-8 para correcta apertura en Excel ── */
+function downloadCSVFile(csv, filename){
+  var blob = new Blob(['﻿' + csv], {type:'text/csv;charset=utf-8;'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+function exportPredictivoCSV(){
+  var rows = getPredictivoFiltrado();
+  if(!rows.length){ showToast('No hay datos para exportar.'); return; }
+  var ws = XLSX.utils.json_to_sheet(rows, {header: PRED_COLS});
+  downloadCSVFile(XLSX.utils.sheet_to_csv(ws), 'Predictivo_Interesados_' + Date.now() + '.csv');
+  showToast('⬇ CSV exportado: ' + rows.length.toLocaleString() + ' registros');
+}
+
+/* ── JPG agrupado por AgentName — función compartida entre los 3 módulos ── */
+function exportPredictivoAgentJPG(rows, moduleLabel){
+  if(!rows || !rows.length){ showToast('No hay datos para exportar.'); return; }
+
+  // Agrupar por AgentName y contar
+  var counts = {};
+  rows.forEach(function(r){
+    var agent = String(r['AgentName'] || '').trim() || 'Sin asignar';
+    counts[agent] = (counts[agent] || 0) + 1;
+  });
+  var agentRows = Object.keys(counts)
+    .map(function(a){ return {AgentName: a, Leads: counts[a]}; })
+    .sort(function(a,b){ return b.Leads - a.Leads || a.AgentName.localeCompare(b.AgentName); });
+
+  var total   = rows.length;
+  var generated = new Date().toLocaleString('es-CO',{
+    year:'numeric', month:'numeric', day:'numeric',
+    hour:'numeric', minute:'2-digit', second:'2-digit'
+  });
+
+  var scale   = 2;
+  var width   = 1200;
+  var margin  = 34;
+  var titleH  = 116;
+  var summaryH= 86;
+  var rowH    = 34;
+  var footerH = 44;
+  var height  = Math.max(460, titleH + summaryH + 38 + agentRows.length * rowH + footerH + 60);
+
+  var canvas  = document.createElement('canvas');
+  canvas.width  = width  * scale;
+  canvas.height = height * scale;
+  var ctx = canvas.getContext('2d');
+  ctx.scale(scale, scale);
+
+  // Fondo
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(0, 0, width, height);
+
+  // Header oscuro
+  ctx.fillStyle = '#0C2340';
+  ctx.fillRect(0, 0, width, titleH);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 30px Segoe UI, Arial, sans-serif';
+  ctx.fillText('Predictivo por AgentName', margin, 54);
+  ctx.font = '15px Segoe UI, Arial, sans-serif';
+  ctx.fillText(moduleLabel + '  ·  Generado: ' + generated, margin, 88);
+
+  // Tarjeta resumen
+  var cardY = titleH + 24;
+  ctx.fillStyle = '#f4f8fb';
+  ctx.fillRect(margin, cardY, width - margin*2, 58);
+  ctx.fillStyle = '#0C2340';
+  ctx.font = 'bold 26px Segoe UI, Arial, sans-serif';
+  ctx.fillText(total.toLocaleString(), margin + 22, cardY + 37);
+  ctx.font = '14px Segoe UI, Arial, sans-serif';
+  ctx.fillStyle = '#58677a';
+  ctx.fillText('leads  ·  ' + agentRows.length.toLocaleString() + ' agentes', margin + 170, cardY + 36);
+
+  // Encabezado tabla
+  var y = cardY + 92;
+  ctx.fillStyle = '#1B365D';
+  ctx.fillRect(margin, y, width - margin*2, 38);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 15px Segoe UI, Arial, sans-serif';
+  ctx.fillText('AgentName', margin + 12, y + 25);
+  ctx.fillText('Leads', width - margin - 70, y + 25);
+  y += 38;
+
+  function cutText(text, x, yy, maxW){
+    var s = String(text || '');
+    while(ctx.measureText(s).width > maxW && s.length > 4) s = s.slice(0, -2);
+    if(s !== String(text || '')) s += '…';
+    ctx.fillText(s, x, yy);
+  }
+
+  agentRows.forEach(function(r, i){
+    ctx.fillStyle = i % 2 ? '#ffffff' : '#f8fafc';
+    ctx.fillRect(margin, y, width - margin*2, rowH);
+    ctx.strokeStyle = '#e8eef5';
+    ctx.beginPath();
+    ctx.moveTo(margin, y + rowH); ctx.lineTo(width - margin, y + rowH);
+    ctx.stroke();
+    ctx.fillStyle = '#2c3e50';
+    ctx.font = '14px Segoe UI, Arial, sans-serif';
+    cutText(r.AgentName, margin + 12, y + 22, 920);
+    ctx.fillStyle = '#0C2340';
+    ctx.font = 'bold 15px Segoe UI, Arial, sans-serif';
+    ctx.fillText(r.Leads.toLocaleString(), width - margin - 60, y + 22);
+    y += rowH;
+  });
+
+  // Footer
+  ctx.fillStyle = '#898D8D';
+  ctx.font = '12px Segoe UI, Arial, sans-serif';
+  ctx.fillText('Generado desde App Normalizador Contact CUN  ·  ' + generated, margin, height - 18);
+
+  var link = document.createElement('a');
+  link.href = canvas.toDataURL('image/jpeg', 0.95);
+  link.download = 'Predictivo_AgentName_' + String(moduleLabel).replace(/\s+/g,'_') + '_' + Date.now() + '.jpg';
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  showToast('📸 JPG exportado por AgentName  ·  ' + agentRows.length.toLocaleString() + ' agentes');
+}
+
+function exportPredictivoJPG(){
+  exportPredictivoAgentJPG(getPredictivoFiltrado(), 'Base Interesados');
+}
+
 function exportInterFiltered(){
   exportInterRows(interFiltered, 'Base_Interesados_Filtrada_' + Date.now() + '.xlsx', INTER_BASE_COLS);
 }

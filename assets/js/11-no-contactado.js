@@ -401,6 +401,23 @@ function exportNCRows(rows,name,cols){
   showToast(`⬇ ${rows.length.toLocaleString()} filas exportadas`);
 }
 function exportNCPredictivo(){ exportNCRows(getNCPredictivoFiltrado(),'Predictivo_No_Contactado_'+Date.now()+'.xlsx',NC_PRED_COLS); }
+
+function exportNCPredictivoCSV(){
+  var rows = getNCPredictivoFiltrado();
+  if(!rows.length){ showToast('No hay datos para exportar.'); return; }
+  var ws = XLSX.utils.json_to_sheet(rows, {header: NC_PRED_COLS});
+  if(typeof downloadCSVFile === 'function'){
+    downloadCSVFile(XLSX.utils.sheet_to_csv(ws), 'Predictivo_No_Contactado_' + Date.now() + '.csv');
+  }
+  showToast('⬇ CSV exportado: ' + rows.length.toLocaleString() + ' registros');
+}
+
+function exportNCPredictivoJPG(){
+  if(typeof exportPredictivoAgentJPG === 'function'){
+    exportPredictivoAgentJPG(getNCPredictivoFiltrado(), 'Base No Contactado');
+  }
+}
+
 function exportNCFiltered(){ exportNCRows(ncFiltered,'Base_No_Contactado_Filtrada_'+Date.now()+'.xlsx',NC_BASE_COLS); }
 function exportNCAll(){ exportNCRows(ncData,'Base_No_Contactado_Completa_'+Date.now()+'.xlsx',NC_BASE_COLS); }
 function copiarNCPredictivoContactIds(){ const data=getNCPredictivoFiltrado(); navigator.clipboard.writeText(data.map(r=>r['CONTACTID']).join('\n')).then(()=>showToast(`📋 ${data.length.toLocaleString()} CONTACTID copiados`)); }

@@ -23,18 +23,10 @@ const COLS_SHOW=[
   'NOVEDAD','Campaña mercadeo','Periodo','conv','Creado por','Total Notas','DUPLICADO'
 ];
 const FILTER_DEFS=[
-  {id:'f-camp', col:'CAMPAÑA',          lbl:'Campaña'},
-  {id:'f-area', col:'AREA PROGRAMA',    lbl:'Área Programa'},
   {id:'f-val',  col:'VALIDACION FINAL', lbl:'Validación Final'},
   {id:'f-nov',  col:'NOVEDAD',          lbl:'Novedad'},
-  {id:'f-ciu',  col:'CIUDAD',           lbl:'Ciudad'},
-  {id:'f-ase',  col:'Asesor',           lbl:'Asesor'},
-  {id:'f-prog', col:'PROGRAMA2',        lbl:'Programa'},
   {id:'f-crea', col:'Creado por',       lbl:'Creado por'},
   {id:'f-ment', col:'MENTOR',           lbl:'Supervisor'},
-  {id:'f-llav', col:'Llave',            lbl:'Llave'},
-  {id:'f-nota', col:'Total Notas',      lbl:'Total Notas'},
-  {id:'f-per',  col:'Periodo',          lbl:'Periodo'},
   {id:'f-dup',  col:'DUPLICADO',        lbl:'Duplicado'},
 ];
 const msSel={};

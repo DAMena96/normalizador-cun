@@ -110,6 +110,22 @@ function exportSGPredictivo(){
   showToast('⬇ ' + rows.length.toLocaleString() + ' registros exportados');
 }
 
+function exportSGPredictivoCSV(){
+  var rows = getSGPredictivoFiltrado();
+  if(!rows.length){ showToast('No hay datos para exportar. Carga primero la base.'); return; }
+  var ws = XLSX.utils.json_to_sheet(rows, {header: SG_PRED_COLS});
+  if(typeof downloadCSVFile === 'function'){
+    downloadCSVFile(XLSX.utils.sheet_to_csv(ws), 'Predictivo_Sin_Gestion_' + Date.now() + '.csv');
+  }
+  showToast('⬇ CSV exportado: ' + rows.length.toLocaleString() + ' registros');
+}
+
+function exportSGPredictivoJPG(){
+  if(typeof exportPredictivoAgentJPG === 'function'){
+    exportPredictivoAgentJPG(getSGPredictivoFiltrado(), 'Base Sin Gestión');
+  }
+}
+
 function copiarSGPredictivoContactIds(){
   var data = getSGPredictivoFiltrado();
   if(!data.length){ showToast('No hay registros para copiar.'); return; }

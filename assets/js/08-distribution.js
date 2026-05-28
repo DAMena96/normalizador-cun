@@ -1005,15 +1005,26 @@ function exportDetalleSimple(boxId){
 }
 
 
-/* === OVERRIDE FINAL: SOLO Supervisor_simple.json ===
-   Formato:
-   izquierda = asesor/correo
-   derecha = supervisor
+/* === OVERRIDE FINAL: Supervisor_simple.json (MAP_SUPERVISOR) + fallback hardcodeado ===
+   Prioridad:
+   1) MAP_SUPERVISOR — cargado dinámicamente desde assets/data/Supervisor_simple.json (completo)
+   2) SUPERVISOR_SIMPLE_KV — constante hardcodeada (fallback, puede estar desactualizada)
 */
 function supervisorSimpleLookup(asesor){
   const raw = String(asesor || '').trim();
   if(!raw) return 'Sin supervisor';
 
+  /* ── 1) MAP_SUPERVISOR (JSON completo, fuente de verdad) ── */
+  if(typeof MAP_SUPERVISOR !== 'undefined' && Object.keys(MAP_SUPERVISOR).length > 0){
+    const info = (typeof lookupSupervisorInfo === 'function')
+      ? lookupSupervisorInfo(raw)
+      : null;
+    if(info && info.supervisor && info.supervisor !== 'Sin supervisor'){
+      return info.supervisor;
+    }
+  }
+
+  /* ── 2) SUPERVISOR_SIMPLE_KV (hardcodeado, fallback) ── */
   if(Object.prototype.hasOwnProperty.call(SUPERVISOR_SIMPLE_KV, raw)){
     return String(SUPERVISOR_SIMPLE_KV[raw] || 'Sin supervisor').trim() || 'Sin supervisor';
   }

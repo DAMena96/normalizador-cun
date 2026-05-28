@@ -153,7 +153,9 @@
   <div class="tbl-hdr">
     <h3 id="sg-pred-title">Predictivo</h3>
     <div class="tbl-acts">
-      <button class="btn btn-green"  onclick="exportSGPredictivo()">⬇ Exportar predictivo</button>
+      <button class="btn btn-green"  onclick="exportSGPredictivo()">⬇ Exportar XLSX</button>
+      <button class="btn btn-green"  onclick="exportSGPredictivoCSV()">⬇ Exportar CSV</button>
+      <button class="btn btn-orange" onclick="exportSGPredictivoJPG()">📸 JPG por AgentName</button>
       <button class="btn btn-orange" onclick="copiarSGPredictivoContactIds()">📋 Copiar CONTACTID</button>
     </div>
   </div>
@@ -303,7 +305,9 @@
     <div class="tbl-hdr">
       <h3 id="pred-title">Predictivo</h3>
       <div class="tbl-acts">
-        <button class="btn btn-green" onclick="exportPredictivo()">⬇ Exportar predictivo</button>
+        <button class="btn btn-green"  onclick="exportPredictivo()">⬇ Exportar XLSX</button>
+        <button class="btn btn-green"  onclick="exportPredictivoCSV()">⬇ Exportar CSV</button>
+        <button class="btn btn-orange" onclick="exportPredictivoJPG()">📸 JPG por AgentName</button>
         <button class="btn btn-orange" onclick="copiarPredictivoContactIds()">📋 Copiar CONTACTID</button>
       </div>
     </div>
@@ -458,11 +462,13 @@
     <div class="tbl-hdr">
       <h3 id="nc-pred-title">Predictivo</h3>
       <div class="tbl-acts">
-        <button class="btn btn-green" onclick="exportNCPredictivo()">⬇ Exportar predictivo</button>
+        <button class="btn btn-green"  onclick="exportNCPredictivo()">⬇ Exportar XLSX</button>
+        <button class="btn btn-green"  onclick="exportNCPredictivoCSV()">⬇ Exportar CSV</button>
+        <button class="btn btn-orange" onclick="exportNCPredictivoJPG()">📸 JPG por AgentName</button>
         <button class="btn btn-orange" onclick="copiarNCPredictivoContactIds()">📋 Copiar CONTACTID</button>
       </div>
     </div>
-    <div class="predictivo-note">Campos generados: CONTACTID, Prioridad, email, First_name, telefono, Programa, number 1, AgentName.</div>
+    <div class="predictivo-note">Campos generados: CONTACTID · Prioridad · email · First_name · telefono · Programa · number 1 · AgentName · ValCorreo</div>
     <div class="inter-table-container">
       <table><thead id="nc-pred-head"></thead><tbody id="nc-pred-body"></tbody></table>
       <div class="pag-wrap-inter">

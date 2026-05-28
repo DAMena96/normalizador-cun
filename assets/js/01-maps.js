@@ -115,21 +115,36 @@ function extractEmail(value=''){
   return m ? m[0].toLowerCase() : '';
 }
 
-function buildSupervisorMap(rows){
+function buildSupervisorMap(data){
   const map = {};
-  if(!Array.isArray(rows)) return map;
+  if(!data) return map;
 
-  rows.forEach(row => {
+  /* ── Formato plano: { "asesor@email.com": "NombreSupervisor", … } ──
+     Este es el formato de Supervisor_simple.json                        */
+  if(!Array.isArray(data) && typeof data === 'object'){
+    Object.entries(data).forEach(([asesorRaw, supervisorRaw]) => {
+      if(!asesorRaw) return;
+      const supervisor = String(supervisorRaw || 'Sin supervisor').trim() || 'Sin supervisor';
+      const info = { asesor: asesorRaw, area: 'Sin área', grupo: '', supervisor };
+
+      const email = extractEmail(asesorRaw);
+      if(email) map[email] = info;
+
+      map[normalizeEmailOrText(asesorRaw)] = info;
+      map[cleanText(asesorRaw)]            = info;
+    });
+    return map;
+  }
+
+  /* ── Formato array (fallback por compatibilidad) ── */
+  data.forEach(row => {
     const entries = Object.entries(row || {});
     if(!entries.length) return;
 
-    // Ejemplo:
-    // key[0] = "Vinculaciones Carlos Andres Burgos Carvajal" => SUPERVISOR
-    // value[0] = "cesar_...@cun.edu.co" => ASESOR
     const supervisor = String(entries[0]?.[0] || 'Sin supervisor').trim() || 'Sin supervisor';
-    const asesorRaw = String(entries[0]?.[1] || '').trim();
-    const area = String(entries[1]?.[1] || 'Sin área').trim() || 'Sin área';
-    const grupo = String(entries[2]?.[1] || '').trim();
+    const asesorRaw  = String(entries[0]?.[1] || '').trim();
+    const area       = String(entries[1]?.[1] || 'Sin área').trim() || 'Sin área';
+    const grupo      = String(entries[2]?.[1] || '').trim();
 
     if(!asesorRaw) return;
 
@@ -139,7 +154,7 @@ function buildSupervisorMap(rows){
     if(email) map[email] = info;
 
     map[normalizeEmailOrText(asesorRaw)] = info;
-    map[cleanText(asesorRaw)] = info;
+    map[cleanText(asesorRaw)]            = info;
   });
 
   return map;
