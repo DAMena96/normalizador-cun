@@ -132,6 +132,15 @@ function normalizeReciboRow(row, headers){
   r['TELEFONO CARI'] = getRecPhone(r);
   r['Periodo CARI'] = getRecPeriodoCari(r);
 
+  // Asesor y mentor para la pestaña Base RECIBOS y la sección 4 detalle
+  const _recAsesorEmail = (typeof getAsesorEmail === 'function')
+    ? getAsesorEmail(r['Propietario de Interesado'])
+    : String(r['Propietario de Interesado'] || '').trim();
+  r['CORREO ASESOR ASIGNADO'] = _recAsesorEmail;
+  r['MENTOR'] = (typeof supervisorSimpleLookup === 'function')
+    ? supervisorSimpleLookup(_recAsesorEmail)
+    : '';
+
   return r;
 }
 
@@ -186,6 +195,7 @@ function switchRecTab(n){
   document.querySelectorAll('#recibos-module .rec-panel').forEach((p,i)=>p.classList.toggle('active',i===n));
   if(n === 0) renderRecCari();
   if(n === 1) updateRecNotasInfo();
+  if(n === 2) renderRecBase();
 }
 
 function buildRecFilterPanel(){
@@ -271,7 +281,7 @@ function applyRecFilters(){
     return true;
   });
   recCariPage=1;
-  renderRecKPIs(); renderRecCari(); updateRecNotasInfo();
+  renderRecKPIs(); renderRecCari(); updateRecNotasInfo(); renderRecBase();
 }
 
 function renderRecKPIs(){
@@ -367,4 +377,43 @@ function cleanRecCatalog(v){
   const s = String(v ?? '').trim();
   if(!s) return '-';
   return s.toUpperCase();
+}
+
+/* ─── Base RECIBOS ─── */
+const REC_BASE_COLS = ['ID de registro', 'Propietario de Interesado', 'MENTOR'];
+
+function buildRecBaseRows(){
+  return recFiltered.map(r => ({
+    'ID de registro'           : r['ID de registro'] || '',
+    'Propietario de Interesado': r['Propietario de Interesado'] || '',
+    'MENTOR'                   : r['MENTOR'] || ''
+  }));
+}
+
+function renderRecBase(){
+  const rows = buildRecBaseRows();
+  const tbl  = document.getElementById('rec-base-tbl');
+  const info = document.getElementById('rec-base-info');
+  if(!tbl) return;
+  if(info) info.textContent = rows.length.toLocaleString() + ' registros';
+  const thRow = REC_BASE_COLS.map(function(c){ return '<th>' + c + '</th>'; }).join('');
+  const bodyRows = rows.map(function(r){
+    return '<tr>' + REC_BASE_COLS.map(function(c){
+      var v = escapeHtml(String(r[c] != null ? r[c] : ''));
+      return '<td title="' + v + '">' + v + '</td>';
+    }).join('') + '</tr>';
+  }).join('');
+  tbl.innerHTML = '<thead><tr>' + thRow + '</tr></thead><tbody>' + bodyRows + '</tbody>';
+  if(typeof window.renderDetalleAsesorRec === 'function') window.renderDetalleAsesorRec();
+}
+
+function exportRecBase(){
+  var rows = buildRecBaseRows();
+  if(!rows.length){ showToast('No hay registros para exportar.'); return; }
+  var ws = XLSX.utils.json_to_sheet(rows, { header: REC_BASE_COLS });
+  var wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Base RECIBOS');
+  var stamp = typeof getDateStamp === 'function' ? getDateStamp() : '';
+  XLSX.writeFile(wb, 'DETALLE_RECIBOS ' + stamp + '.xlsx');
+  showToast('⬇ ' + rows.length.toLocaleString() + ' registros exportados');
 }

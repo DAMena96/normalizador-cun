@@ -2281,11 +2281,12 @@ header span{
 }
 #progress-label{font-size:.8rem;color:var(--cun-azul);font-weight:700;margin-top:6px;}
 
-/* Interesados / No Contactado / Recibos */
+/* Interesados / No Contactado / Recibos / Problemas Económicos */
 .inter-progress-bar{height:9px;border-radius:999px;overflow:hidden;}
 #inter-progress-fill,
 #nc-progress-fill,
-#rec-progress-fill{
+#rec-progress-fill,
+#pe-progress-fill{
   background:linear-gradient(90deg,var(--cun-blue) 0%,var(--cun-teal) 33%,var(--cun-lima) 60%,var(--cun-teal) 80%,var(--cun-blue) 100%);
   background-size:200% auto;
   animation:progShimmer 2s linear infinite;
@@ -2295,7 +2296,8 @@ header span{
 }
 #inter-progress-label,
 #nc-progress-label,
-#rec-progress-label{
+#rec-progress-label,
+#pe-progress-label{
   font-size:.8rem;
   color:var(--cun-azul);
   font-weight:700;

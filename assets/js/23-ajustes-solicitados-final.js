@@ -163,7 +163,7 @@
 
     const total = rows.reduce((a,b)=>a + Number(b['Cantidad leads'] || 0), 0);
     const generated = nowText();
-    const scale = 2;
+    const scale = 4;
     const width = 1200;
     const margin = 34;
     const titleH = 116;
@@ -236,7 +236,7 @@
     ctx.fillText(`Generado desde App Normalizador Contact CUN · ${generated}`, margin, height - 18);
 
     const link = document.createElement('a');
-    link.href = canvas.toDataURL('image/jpeg', 0.95);
+    link.href = canvas.toDataURL('image/jpeg', 0.98);
     link.download = `${cfg.filePrefix}_${Date.now()}.jpg`;
     document.body.appendChild(link);
     link.click();

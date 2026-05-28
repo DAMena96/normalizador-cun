@@ -32,8 +32,7 @@ const PRED_COLS = ['CONTACTID','Prioridad','email','First_name','telefono','Prog
 
 const INTER_FILTER_DEFS = [
   {id:'if-area-valida', col:'AREA VALIDA', lbl:'Área válida'},
-  {id:'if-val', col:'VAL', lbl:'VAL'},
-  {id:'if-fecha-crea', col:'FECHA CREACION', lbl:'Fecha creación'}
+  {id:'if-supervisor',  col:'SUPERVISOR',  lbl:'Supervisor'},
 ];
 
 function handleDropInteresados(e){
@@ -185,9 +184,13 @@ function normalizeInteresadoRow(row, headers){
   // AREA viene de areas.json. Esta regla solo aplica cuando AREA = MIXTO.
   r['AREA VALIDA'] = calcularAreaValida(r['VAL'], r['conv'], r['Periodo']);
 
-  // Supervisor: BUSCARV(Ciudad de residencia; VAL!A:D;4;FALSO)
-  // Si no existe catálogo supervisor, se deja la ciudad normalizada como referencia.
-  r['SUPERVISOR'] = lookup(MAP_ASESOR, r['Ciudad de residencia'], r['CIUDAD'] || '-');
+  // Supervisor: igual que Sin Gestión → supervisorSimpleLookup(email_asesor)
+  const _interAsesorEmail = (typeof getAsesorEmail === 'function')
+    ? getAsesorEmail(r['Propietario de Posible Cliente'])
+    : String(r['Propietario de Posible Cliente'] || '').trim();
+  r['SUPERVISOR'] = (typeof supervisorSimpleLookup === 'function')
+    ? supervisorSimpleLookup(_interAsesorEmail)
+    : '';
 
   // Hora creación truncada: fecha sin hora
   r['FECHA CREACION'] = truncDate(r['Hora de creación']);
@@ -424,6 +427,23 @@ function buildInterFilterPanel(){
     row.appendChild(div);
   });
 
+  /* ── Rango de fechas por Hora de modificación ── */
+  const dateDiv = document.createElement('div');
+  dateDiv.className = 'fg';
+  dateDiv.style.minWidth = '280px';
+  dateDiv.innerHTML = `
+    <label>Hora de modificación<span class="clr" onclick="clearInterDateFilter()">✖</span></label>
+    <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+      <input type="date" id="if-fecha-desde"
+             style="flex:1;min-width:120px;padding:5px 7px;border:1.5px solid #c5cfd9;border-radius:6px;font-size:.82rem;"
+             oninput="applyInterFilters()" title="Desde">
+      <span style="color:#888;font-size:.8rem;flex-shrink:0;">–</span>
+      <input type="date" id="if-fecha-hasta"
+             style="flex:1;min-width:120px;padding:5px 7px;border:1.5px solid #c5cfd9;border-radius:6px;font-size:.82rem;"
+             oninput="applyInterFilters()" title="Hasta">
+    </div>`;
+  row.appendChild(dateDiv);
+
   const txt = document.createElement('div');
   txt.className = 'fg';
   txt.style.minWidth = '190px';
@@ -437,6 +457,14 @@ function buildInterFilterPanel(){
   clrb.style.minWidth = 'auto';
   clrb.innerHTML = `<label>&nbsp;</label><button class="btn btn-gray" onclick="clearInterFilters()">✖ Limpiar</button>`;
   row.appendChild(clrb);
+}
+
+function clearInterDateFilter(){
+  const d = document.getElementById('if-fecha-desde');
+  const h = document.getElementById('if-fecha-hasta');
+  if(d) d.value = '';
+  if(h) h.value = '';
+  applyInterFilters();
 }
 
 function populateInterFilters(){
@@ -480,6 +508,10 @@ function clearInterFilters(){
   });
   const buscar = document.getElementById('if-buscar');
   if(buscar) buscar.value = '';
+  const desde = document.getElementById('if-fecha-desde');
+  const hasta  = document.getElementById('if-fecha-hasta');
+  if(desde) desde.value = '';
+  if(hasta)  hasta.value  = '';
   applyInterFilters();
 }
 
@@ -491,7 +523,9 @@ function updateInterFilterText(id){
 }
 
 function applyInterFilters(){
-  const q = String(document.getElementById('if-buscar')?.value || '').toLowerCase().trim();
+  const q     = String(document.getElementById('if-buscar')?.value || '').toLowerCase().trim();
+  const desde = document.getElementById('if-fecha-desde')?.value || '';
+  const hasta  = document.getElementById('if-fecha-hasta')?.value  || '';
 
   interFiltered = interData.filter(r => {
     for(const f of INTER_FILTER_DEFS){
@@ -500,10 +534,17 @@ function applyInterFilters(){
       if(vals.length && !vals.includes(String(r[f.col] || ''))) return false;
     }
 
+    /* Rango de fechas por Hora de modificación */
+    if(desde || hasta){
+      const modDate = truncDate(r['Hora de modificación'] || '');
+      if(desde && modDate < desde) return false;
+      if(hasta  && modDate > hasta) return false;
+    }
+
     if(q){
       const hay = [
         r['ID de registro'], r['Nombre completo'], r['Correo electrónico'], r['Teléfono'],
-        r['PROGRAMA2'], r['CIUDAD'], r['AREA VALIDA'], r['VAL']
+        r['PROGRAMA2'], r['CIUDAD'], r['AREA VALIDA'], r['SUPERVISOR']
       ].join(' ').toLowerCase();
       if(!hay.includes(q)) return false;
     }
@@ -659,7 +700,7 @@ function exportPredictivoAgentJPG(rows, moduleLabel){
     hour:'numeric', minute:'2-digit', second:'2-digit'
   });
 
-  var scale   = 2;
+  var scale   = 4;
   var width   = 1200;
   var margin  = 34;
   var titleH  = 116;
@@ -737,7 +778,7 @@ function exportPredictivoAgentJPG(rows, moduleLabel){
   ctx.fillText('Generado desde App Normalizador Contact CUN  ·  ' + generated, margin, height - 18);
 
   var link = document.createElement('a');
-  link.href = canvas.toDataURL('image/jpeg', 0.95);
+  link.href = canvas.toDataURL('image/jpeg', 0.98);
   link.download = 'Predictivo_AgentName_' + String(moduleLabel).replace(/\s+/g,'_') + '_' + Date.now() + '.jpg';
   document.body.appendChild(link); link.click(); document.body.removeChild(link);
   showToast('📸 JPG exportado por AgentName  ·  ' + agentRows.length.toLocaleString() + ' agentes');

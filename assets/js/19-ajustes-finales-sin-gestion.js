@@ -187,7 +187,7 @@ function exportDetalleAsesorPNG(){
     hour:'numeric', minute:'2-digit', second:'2-digit'
   });
 
-  const scale = 2;
+  const scale = 4;
   const width = 1200;
   const margin = 36;
   const titleH = 106;
@@ -285,7 +285,7 @@ function exportDetalleAsesorPNG(){
   ctx.fillText('Generado desde App Normalizador Contact CUN  ·  ' + generated, margin, height - 18);
 
   const link = document.createElement('a');
-  link.href = canvas.toDataURL('image/jpeg', 0.95);
+  link.href = canvas.toDataURL('image/jpeg', 0.98);
   link.download = 'Detalle_Asesor_Por_Mentor_Sin_Gestion_' + Date.now() + '.jpg';
   document.body.appendChild(link);
   link.click();

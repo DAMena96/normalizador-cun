@@ -94,7 +94,7 @@ function resetAllModuleViews(){
   });
 
   // Módulos
-  ['interesados-module','no-contactado-module','recibos-module'].forEach(id => {
+  ['interesados-module','no-contactado-module','recibos-module','problemas-economicos-module'].forEach(id => {
     const el = document.getElementById(id);
     if(el) el.classList.add('hidden');
   });
@@ -136,6 +136,14 @@ function selectModule(type){
     if(mod) mod.classList.remove('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
     showToast('🧾 Módulo Recibos CARE AI cargado');
+    return;
+  }
+
+  if(type === 'problemas-economicos'){
+    const mod = document.getElementById('problemas-economicos-module');
+    if(mod) mod.classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    showToast('💸 Módulo Problemas Económicos cargado');
     return;
   }
 }

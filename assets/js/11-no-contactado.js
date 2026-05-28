@@ -31,9 +31,8 @@ const NC_SHOW_COLS = [
 const NC_PRED_COLS = ['CONTACTID','Prioridad','email','First_name','telefono','Programa','number 1','AgentName','ValCorreo'];
 
 const NC_FILTER_DEFS = [
-  {id:'nc-area-valida', col:'AREA VALIDA', lbl:'Área válida'},
-  {id:'nc-val', col:'VAL', lbl:'VAL'},
-  {id:'nc-fecha-crea', col:'FECHA CREACION', lbl:'Fecha creación'}
+  {id:'nc-area-valida', col:'AREA VALIDA',  lbl:'Área válida'},
+  {id:'nc-supervisor',  col:'SUPERVISOR',   lbl:'Supervisor'},
 ];
 
 function handleDropNC(e){
@@ -159,7 +158,13 @@ function normalizeNCRow(row, headers){
 
   r['AREA VALIDA'] = calcularNCAreaValida(r['VAL'], r['conv'], r['Periodo']);
 
-  r['SUPERVISOR'] = lookup(MAP_ASESOR, r['Ciudad de residencia'], r['CIUDAD'] || '-');
+  // Supervisor: igual que Sin Gestión → supervisorSimpleLookup(email_asesor)
+  const _ncAsesorEmail = (typeof getAsesorEmail === 'function')
+    ? getAsesorEmail(r['Propietario de Posible Cliente'])
+    : String(r['Propietario de Posible Cliente'] || '').trim();
+  r['SUPERVISOR'] = (typeof supervisorSimpleLookup === 'function')
+    ? supervisorSimpleLookup(_ncAsesorEmail)
+    : '';
   r['FECHA CREACION'] = truncNCDate(r['Hora de creación']);
 
   return r;
@@ -276,6 +281,24 @@ function buildNCFilterPanel(){
       </div>`;
     row.appendChild(div);
   });
+
+  /* ── Rango de fechas por Hora de modificación ── */
+  const dateDiv = document.createElement('div');
+  dateDiv.className = 'fg';
+  dateDiv.style.minWidth = '280px';
+  dateDiv.innerHTML = `
+    <label>Hora de modificación<span class="clr" onclick="clearNCDateFilter()">✖</span></label>
+    <div style="display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+      <input type="date" id="nc-fecha-desde"
+             style="flex:1;min-width:120px;padding:5px 7px;border:1.5px solid #c5cfd9;border-radius:6px;font-size:.82rem;"
+             oninput="applyNCFilters()" title="Desde">
+      <span style="color:#888;font-size:.8rem;flex-shrink:0;">–</span>
+      <input type="date" id="nc-fecha-hasta"
+             style="flex:1;min-width:120px;padding:5px 7px;border:1.5px solid #c5cfd9;border-radius:6px;font-size:.82rem;"
+             oninput="applyNCFilters()" title="Hasta">
+    </div>`;
+  row.appendChild(dateDiv);
+
   const txt = document.createElement('div');
   txt.className='fg'; txt.style.minWidth='190px';
   txt.innerHTML = `<label>Buscar nombre/correo/tel/ID</label><input type="text" id="nc-buscar" placeholder="Escribe para buscar…" oninput="applyNCFilters()">`;
@@ -284,6 +307,14 @@ function buildNCFilterPanel(){
   clrb.className='fg'; clrb.style.flex='0'; clrb.style.minWidth='auto';
   clrb.innerHTML = `<label>&nbsp;</label><button class="btn btn-gray" onclick="clearNCFilters()">✖ Limpiar</button>`;
   row.appendChild(clrb);
+}
+
+function clearNCDateFilter(){
+  const d = document.getElementById('nc-fecha-desde');
+  const h = document.getElementById('nc-fecha-hasta');
+  if(d) d.value = '';
+  if(h) h.value = '';
+  applyNCFilters();
 }
 
 function populateNCFilters(){
@@ -313,6 +344,8 @@ function clearNCFilters(){
     updateNCFilterText(f.id);
   });
   const b=document.getElementById('nc-buscar'); if(b)b.value='';
+  const desde=document.getElementById('nc-fecha-desde'); if(desde)desde.value='';
+  const hasta=document.getElementById('nc-fecha-hasta'); if(hasta)hasta.value='';
   applyNCFilters();
 }
 function updateNCFilterText(id){
@@ -322,15 +355,24 @@ function updateNCFilterText(id){
 }
 
 function applyNCFilters(){
-  const q = String(document.getElementById('nc-buscar')?.value || '').toLowerCase().trim();
+  const q     = String(document.getElementById('nc-buscar')?.value || '').toLowerCase().trim();
+  const desde = document.getElementById('nc-fecha-desde')?.value || '';
+  const hasta  = document.getElementById('nc-fecha-hasta')?.value  || '';
+
   ncFiltered = ncData.filter(r=>{
     for(const f of NC_FILTER_DEFS){
       const vals=[...document.querySelectorAll('#list-'+f.id+' input:checked')].map(c=>c.value);
       updateNCFilterText(f.id);
       if(vals.length && !vals.includes(String(r[f.col] || ''))) return false;
     }
+    /* Rango de fechas por Hora de modificación */
+    if(desde || hasta){
+      const modDate = truncNCDate(r['Hora de modificación'] || '');
+      if(desde && modDate < desde) return false;
+      if(hasta  && modDate > hasta) return false;
+    }
     if(q){
-      const hay=[r['ID de registro'],r['Nombre completo'],r['Correo electrónico'],r['Teléfono'],r['PROGRAMA NORMALIZADO'],r['CIUDAD'],r['AREA VALIDA'],r['VAL']].join(' ').toLowerCase();
+      const hay=[r['ID de registro'],r['Nombre completo'],r['Correo electrónico'],r['Teléfono'],r['PROGRAMA NORMALIZADO'],r['CIUDAD'],r['AREA VALIDA'],r['SUPERVISOR']].join(' ').toLowerCase();
       if(!hay.includes(q)) return false;
     }
     return true;
@@ -342,10 +384,12 @@ function applyNCFilters(){
 function renderNCKPIs(){
   const d = ncFiltered.length ? ncFiltered : ncData;
   document.getElementById('nk-total').textContent = ncData.length.toLocaleString();
-  document.getElementById('nk-pred').textContent = ncPredictivoData.length.toLocaleString();
-  document.getElementById('nk-virt').textContent = d.filter(r=>r['AREA VALIDA']==='VIRTUAL').length.toLocaleString();
-  document.getElementById('nk-pres').textContent = d.filter(r=>r['AREA VALIDA']==='PRESENCIAL').length.toLocaleString();
-  document.getElementById('nk-sin').textContent = d.filter(r=>['SIN PROGRAMA',''].includes(r['PROGRAMA NORMALIZADO']) || ['SIN CIUDAD',''].includes(r['CIUDAD'])).length.toLocaleString();
+  document.getElementById('nk-pred').textContent  = ncPredictivoData.length.toLocaleString();
+  document.getElementById('nk-virt').textContent  = d.filter(r=>r['AREA VALIDA']==='VIRTUAL').length.toLocaleString();
+  document.getElementById('nk-pres').textContent  = d.filter(r=>r['AREA VALIDA']==='PRESENCIAL').length.toLocaleString();
+  const posEl = document.getElementById('nk-pos');
+  if(posEl) posEl.textContent = d.filter(r=>r['AREA VALIDA']==='POSGRADO').length.toLocaleString();
+  document.getElementById('nk-sin').textContent   = d.filter(r=>['SIN PROGRAMA',''].includes(r['PROGRAMA NORMALIZADO']) || ['SIN CIUDAD',''].includes(r['CIUDAD'])).length.toLocaleString();
 }
 
 function getNCPredictivoFiltrado(){ return ncFiltered.map(function(r, idx){ return buildNCPredictivoRow(r, idx + 1); }); }

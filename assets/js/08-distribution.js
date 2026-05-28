@@ -255,6 +255,13 @@ function getNCFileLabel(){
     return '';
   }catch(e){ return ''; }
 }
+function getPEFileLabel(){
+  try{
+    const checks = [...document.querySelectorAll('#list-pe-area-valida input:checked')];
+    if(checks.length === 1) return '_' + checks[0].value;
+    return '';
+  }catch(e){ return ''; }
+}
 
 /* Override switchTab — nuevo orden de pestañas Sin Gestión:
    0 = Predictivo (tp-4)
@@ -1304,7 +1311,7 @@ function exportDetalleAsesorPNG(){
     hour:'numeric', minute:'2-digit', second:'2-digit'
   });
 
-  const scale = 2;
+  const scale = 4;
   const width = 1200;
   const margin = 36;
   const titleH = 106;
@@ -1406,7 +1413,7 @@ function exportDetalleAsesorPNG(){
   ctx.fillText('Generado desde App Normalizador Contact CUN  ·  ' + generated, margin, height - 18);
 
   const link = document.createElement('a');
-  link.href = canvas.toDataURL('image/jpeg', 0.95);
+  link.href = canvas.toDataURL('image/jpeg', 0.98);
   link.download = 'Detalle_Asesor_Por_Mentor_Sin_Gestion_' + Date.now() + '.jpg';
   document.body.appendChild(link);
   link.click();
@@ -1469,16 +1476,32 @@ function renderDetalleAsesorSG(){
    EXPORTAR DETALLE DISTRIBUCION JPG — Todas las bases
    ========================================================= */
 window.exportDetalleDistJPG = function(module){
-  var LABELS   = { sg:'Base Sin Gestion', inter:'Base Interesados', nc:'Base No Contactado' };
-  var PREFIXES = { sg:'Detalle_Dist_Sin_Gestion', inter:'Detalle_Dist_Interesados', nc:'Detalle_Dist_No_Contactado' };
+  var LABELS = {
+    sg:    'Base Sin Gestion',
+    inter: 'Base Interesados',
+    nc:    'Base No Contactado',
+    pe:    'Problemas Economicos'
+  };
+  var TAGS = { sg:'SG', inter:'INTER', nc:'NOCONTAC', pe:'PROBLEMAS' };
+  var FILE_LABEL_FNS = {
+    sg:    typeof getSGFileLabel    === 'function' ? getSGFileLabel    : function(){ return ''; },
+    inter: typeof getInterFileLabel === 'function' ? getInterFileLabel : function(){ return ''; },
+    nc:    typeof getNCFileLabel    === 'function' ? getNCFileLabel    : function(){ return ''; },
+    pe:    typeof getPEFileLabel    === 'function' ? getPEFileLabel    : function(){ return ''; }
+  };
 
-  var label  = LABELS[module]   || module;
-  var prefix = PREFIXES[module] || 'Detalle_Dist';
-  var data   = module === 'sg'
+  var label     = LABELS[module] || module;
+  var tag       = TAGS[module]   || module.toUpperCase();
+  var fileLabel = (FILE_LABEL_FNS[module] || function(){ return ''; })();
+  var prefix    = 'DETALLE_ASESOR_MENTOR_ASIGNACIÓN ' + getDateStamp() + ' ' + tag + fileLabel;
+
+  var data = module === 'sg'
     ? (typeof distribuidoData      !== 'undefined' ? distribuidoData      : [])
     : module === 'inter'
       ? (typeof interDistribuidoData !== 'undefined' ? interDistribuidoData : [])
-      : (typeof ncDistribuidoData    !== 'undefined' ? ncDistribuidoData    : []);
+      : module === 'pe'
+        ? (typeof peDistribuidoData    !== 'undefined' ? peDistribuidoData    : [])
+        : (typeof ncDistribuidoData    !== 'undefined' ? ncDistribuidoData    : []);
 
   if(!data.length){ showToast('Primero distribuye los leads.'); return; }
 
@@ -1499,7 +1522,7 @@ window.exportDetalleDistJPG = function(module){
     hour:'numeric', minute:'2-digit', second:'2-digit'
   });
 
-  var scale      = 2;
+  var scale      = 4;
   var width      = 1200;
   var margin     = 34;
   var titleH     = 116;
@@ -1583,8 +1606,8 @@ window.exportDetalleDistJPG = function(module){
   ctx.fillText('Generado desde App Normalizador Contact CUN  ·  ' + generated, margin, height - 18);
 
   var link = document.createElement('a');
-  link.href     = canvas.toDataURL('image/jpeg', 0.95);
-  link.download = prefix + '_' + Date.now() + '.jpg';
+  link.href     = canvas.toDataURL('image/jpeg', 0.98);
+  link.download = prefix + '.jpg';
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
