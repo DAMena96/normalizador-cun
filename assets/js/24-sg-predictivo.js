@@ -59,8 +59,10 @@ function buildSGPredictivoRow(r, counter){
 }
 
 function getSGPredictivoFiltrado(){
-  return (typeof filteredData !== 'undefined' ? filteredData : [])
-    .map(function(r, idx){ return buildSGPredictivoRow(r, idx + 1); });
+  var real = (typeof filteredData !== 'undefined' ? filteredData : [])
+    .map(function(r, idx){ return buildSGPredictivoRow(r, idx + 2); });
+  var first = typeof buildPredFirstRow === 'function' ? [buildPredFirstRow(real)] : [];
+  return first.concat(real);
 }
 
 function renderSGPredictivo(){

@@ -392,7 +392,11 @@ function renderNCKPIs(){
   document.getElementById('nk-sin').textContent   = d.filter(r=>['SIN PROGRAMA',''].includes(r['PROGRAMA NORMALIZADO']) || ['SIN CIUDAD',''].includes(r['CIUDAD'])).length.toLocaleString();
 }
 
-function getNCPredictivoFiltrado(){ return ncFiltered.map(function(r, idx){ return buildNCPredictivoRow(r, idx + 1); }); }
+function getNCPredictivoFiltrado(){
+  var real = ncFiltered.map(function(r, idx){ return buildNCPredictivoRow(r, idx + 2); });
+  var first = typeof buildPredFirstRow === 'function' ? [buildPredFirstRow(real)] : [];
+  return first.concat(real);
+}
 
 function renderNCPredictivo(){
   document.getElementById('nc-pred-head').innerHTML = '<tr>'+NC_PRED_COLS.map(c=>`<th>${c}</th>`).join('')+'</tr>';

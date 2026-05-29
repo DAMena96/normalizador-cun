@@ -402,6 +402,8 @@ function switchInterTab(n){
   document.querySelectorAll('#inter-tabs .tab').forEach((t,i)=>t.classList.toggle('active',i===n));
   document.querySelectorAll('#interesados-module .inter-panel').forEach((p,i)=>p.classList.toggle('active',i===n));
   if(n === 2) updateInterDistInfo();
+  if(n === 3) updateInterCariInfo();
+  if(n === 4) updateInterNotasInfo();
 }
 
 function buildInterFilterPanel(){
@@ -558,6 +560,8 @@ function applyInterFilters(){
   renderPredictivo();
   renderInterTable();
   updateInterDistInfo();
+  if(typeof updateInterCariInfo  === 'function') updateInterCariInfo();
+  if(typeof updateInterNotasInfo === 'function') updateInterNotasInfo();
 }
 
 function renderInterKPIs(){
@@ -570,7 +574,9 @@ function renderInterKPIs(){
 }
 
 function getPredictivoFiltrado(){
-  return interFiltered.map(function(r, idx){ return buildPredictivoRow(r, idx + 1); });
+  var real = interFiltered.map(function(r, idx){ return buildPredictivoRow(r, idx + 2); });
+  var first = typeof buildPredFirstRow === 'function' ? [buildPredFirstRow(real)] : [];
+  return first.concat(real);
 }
 
 function renderPredictivo(){
@@ -694,94 +700,141 @@ function exportPredictivoAgentJPG(rows, moduleLabel){
     .map(function(a){ return {AgentName: a, Leads: counts[a]}; })
     .sort(function(a,b){ return b.Leads - a.Leads || a.AgentName.localeCompare(b.AgentName); });
 
-  var total   = rows.length;
+  var total     = rows.length;
   var generated = new Date().toLocaleString('es-CO',{
     year:'numeric', month:'numeric', day:'numeric',
     hour:'numeric', minute:'2-digit', second:'2-digit'
   });
 
-  var scale   = 4;
-  var width   = 1200;
-  var margin  = 34;
-  var titleH  = 116;
-  var summaryH= 86;
-  var rowH    = 34;
-  var footerH = 44;
-  var height  = Math.max(460, titleH + summaryH + 38 + agentRows.length * rowH + footerH + 60);
+  var scale    = 4;
+  var width    = 1200;
+  var margin   = 34;
+  var titleH   = 116;
+  var summaryH = 86;   // tarjeta resumen (solo pág 1)
+  var tableHdrH= 38;   // encabezado de columnas
+  var rowH     = 34;
+  var footerH  = 60;
+  var MAX_PAGE_H = 2400; // px lógicos máx por página
 
-  var canvas  = document.createElement('canvas');
-  canvas.width  = width  * scale;
-  canvas.height = height * scale;
-  var ctx = canvas.getContext('2d');
-  ctx.scale(scale, scale);
+  // Espacio fijo pág 1: header + tarjeta + padding + encabezado tabla + footer
+  var fixedH1 = titleH + summaryH + 24 + tableHdrH + footerH + 24;
+  // Espacio fijo págs siguientes: header + padding + encabezado tabla + footer
+  var fixedHN = titleH + 24 + tableHdrH + footerH + 24;
 
-  // Fondo
-  ctx.fillStyle = '#ffffff';
-  ctx.fillRect(0, 0, width, height);
+  // ── Dividir agentRows en páginas ──
+  var pages    = [];
+  var curPage  = [];
+  var curH     = fixedH1;
 
-  // Header oscuro
-  ctx.fillStyle = '#0C2340';
-  ctx.fillRect(0, 0, width, titleH);
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 30px Segoe UI, Arial, sans-serif';
-  ctx.fillText('Predictivo por AgentName', margin, 54);
-  ctx.font = '15px Segoe UI, Arial, sans-serif';
-  ctx.fillText(moduleLabel + '  ·  Generado: ' + generated, margin, 88);
+  agentRows.forEach(function(r){
+    var fixed = curPage.length === 0 && pages.length === 0 ? fixedH1 : fixedHN;
+    if(curPage.length > 0 && curH + rowH > MAX_PAGE_H){
+      pages.push(curPage);
+      curPage = [r];
+      curH    = fixedHN + rowH;
+    } else {
+      curPage.push(r);
+      curH += rowH;
+    }
+  });
+  if(curPage.length) pages.push(curPage);
 
-  // Tarjeta resumen
-  var cardY = titleH + 24;
-  ctx.fillStyle = '#f4f8fb';
-  ctx.fillRect(margin, cardY, width - margin*2, 58);
-  ctx.fillStyle = '#0C2340';
-  ctx.font = 'bold 26px Segoe UI, Arial, sans-serif';
-  ctx.fillText(total.toLocaleString(), margin + 22, cardY + 37);
-  ctx.font = '14px Segoe UI, Arial, sans-serif';
-  ctx.fillStyle = '#58677a';
-  ctx.fillText('leads  ·  ' + agentRows.length.toLocaleString() + ' agentes', margin + 170, cardY + 36);
+  var multiPage  = pages.length > 1;
+  var moduleName = String(moduleLabel).replace(/\s+/g,'_');
 
-  // Encabezado tabla
-  var y = cardY + 92;
-  ctx.fillStyle = '#1B365D';
-  ctx.fillRect(margin, y, width - margin*2, 38);
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 15px Segoe UI, Arial, sans-serif';
-  ctx.fillText('AgentName', margin + 12, y + 25);
-  ctx.fillText('Leads', width - margin - 70, y + 25);
-  y += 38;
+  // ── Renderizar y descargar cada página ──
+  function renderPage(pageRows, pageIdx){
+    var isFirst = pageIdx === 0;
+    var height  = isFirst
+      ? Math.max(460, fixedH1 + pageRows.length * rowH)
+      : Math.max(300, fixedHN + pageRows.length * rowH);
 
-  function cutText(text, x, yy, maxW){
-    var s = String(text || '');
-    while(ctx.measureText(s).width > maxW && s.length > 4) s = s.slice(0, -2);
-    if(s !== String(text || '')) s += '…';
-    ctx.fillText(s, x, yy);
+    var canvas = document.createElement('canvas');
+    canvas.width  = width * scale;
+    canvas.height = height * scale;
+    var ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
+
+    function cutText(text, x, yy, maxW){
+      var s = String(text || '');
+      while(ctx.measureText(s).width > maxW && s.length > 4) s = s.slice(0, -2);
+      if(s !== String(text || '')) s += '…';
+      ctx.fillText(s, x, yy);
+    }
+
+    // Fondo
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+
+    // Header
+    ctx.fillStyle = '#0C2340';
+    ctx.fillRect(0, 0, width, titleH);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 30px Segoe UI, Arial, sans-serif';
+    var pageLabel = multiPage ? '  (' + (pageIdx+1) + ' / ' + pages.length + ')' : '';
+    ctx.fillText('Predictivo por AgentName' + pageLabel, margin, 54);
+    ctx.font = '15px Segoe UI, Arial, sans-serif';
+    ctx.fillText(moduleLabel + '  ·  Generado: ' + generated, margin, 88);
+
+    var y = titleH + 24;
+
+    // Tarjeta resumen (solo pág 1)
+    if(isFirst){
+      ctx.fillStyle = '#f4f8fb';
+      ctx.fillRect(margin, y, width - margin*2, 58);
+      ctx.fillStyle = '#0C2340';
+      ctx.font = 'bold 26px Segoe UI, Arial, sans-serif';
+      ctx.fillText(total.toLocaleString(), margin + 22, y + 37);
+      ctx.font = '14px Segoe UI, Arial, sans-serif';
+      ctx.fillStyle = '#58677a';
+      ctx.fillText('leads  ·  ' + agentRows.length.toLocaleString() + ' agentes', margin + 170, y + 36);
+      y += summaryH + 14;
+    }
+
+    // Encabezado tabla
+    ctx.fillStyle = '#1B365D';
+    ctx.fillRect(margin, y, width - margin*2, tableHdrH);
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 15px Segoe UI, Arial, sans-serif';
+    ctx.fillText('AgentName', margin + 12, y + 25);
+    ctx.fillText('Leads', width - margin - 70, y + 25);
+    y += tableHdrH;
+
+    // Filas
+    pageRows.forEach(function(r, i){
+      ctx.fillStyle = i % 2 ? '#ffffff' : '#f8fafc';
+      ctx.fillRect(margin, y, width - margin*2, rowH);
+      ctx.strokeStyle = '#e8eef5';
+      ctx.beginPath();
+      ctx.moveTo(margin, y + rowH); ctx.lineTo(width - margin, y + rowH);
+      ctx.stroke();
+      ctx.fillStyle = '#2c3e50';
+      ctx.font = '14px Segoe UI, Arial, sans-serif';
+      cutText(r.AgentName, margin + 12, y + 22, 920);
+      ctx.fillStyle = '#0C2340';
+      ctx.font = 'bold 15px Segoe UI, Arial, sans-serif';
+      ctx.fillText(r.Leads.toLocaleString(), width - margin - 60, y + 22);
+      y += rowH;
+    });
+
+    // Footer
+    ctx.fillStyle = '#898D8D';
+    ctx.font = '12px Segoe UI, Arial, sans-serif';
+    ctx.fillText('Generado desde App Normalizador Contact CUN  ·  ' + generated, margin, height - 18);
+
+    var suffix = multiPage ? '_P' + (pageIdx + 1) : '';
+    var link   = document.createElement('a');
+    link.href  = canvas.toDataURL('image/jpeg', 0.98);
+    link.download = 'Predictivo_AgentName_' + moduleName + suffix + '.jpg';
+    document.body.appendChild(link); link.click(); document.body.removeChild(link);
   }
 
-  agentRows.forEach(function(r, i){
-    ctx.fillStyle = i % 2 ? '#ffffff' : '#f8fafc';
-    ctx.fillRect(margin, y, width - margin*2, rowH);
-    ctx.strokeStyle = '#e8eef5';
-    ctx.beginPath();
-    ctx.moveTo(margin, y + rowH); ctx.lineTo(width - margin, y + rowH);
-    ctx.stroke();
-    ctx.fillStyle = '#2c3e50';
-    ctx.font = '14px Segoe UI, Arial, sans-serif';
-    cutText(r.AgentName, margin + 12, y + 22, 920);
-    ctx.fillStyle = '#0C2340';
-    ctx.font = 'bold 15px Segoe UI, Arial, sans-serif';
-    ctx.fillText(r.Leads.toLocaleString(), width - margin - 60, y + 22);
-    y += rowH;
-  });
+  pages.forEach(function(pg, idx){ setTimeout(function(){ renderPage(pg, idx); }, idx * 400); });
 
-  // Footer
-  ctx.fillStyle = '#898D8D';
-  ctx.font = '12px Segoe UI, Arial, sans-serif';
-  ctx.fillText('Generado desde App Normalizador Contact CUN  ·  ' + generated, margin, height - 18);
-
-  var link = document.createElement('a');
-  link.href = canvas.toDataURL('image/jpeg', 0.98);
-  link.download = 'Predictivo_AgentName_' + String(moduleLabel).replace(/\s+/g,'_') + '_' + Date.now() + '.jpg';
-  document.body.appendChild(link); link.click(); document.body.removeChild(link);
-  showToast('📸 JPG exportado por AgentName  ·  ' + agentRows.length.toLocaleString() + ' agentes');
+  var msg = multiPage
+    ? '📸 Exportando ' + pages.length + ' imágenes (P1…P' + pages.length + ')  ·  ' + agentRows.length + ' agentes'
+    : '📸 JPG exportado  ·  ' + agentRows.length.toLocaleString() + ' agentes';
+  showToast(msg);
 }
 
 function exportPredictivoJPG(){
@@ -1116,4 +1169,155 @@ function distribuirInteresados(){
   showInterDistStats();
   renderDetalleAsesorInter();
   showToast(`✅ ${interDistribuidoData.length.toLocaleString()} leads distribuidos mezclando antiguos y nuevos`);
+}
+
+
+/* ════════════════════════════════════════════
+   CARI AI + NOTAS — BASE INTERESADOS
+   ════════════════════════════════════════════ */
+
+const INTER_CARI_COLS = ['numero_telefono','nombre_aspirante','carrera_interes','identificacion','correo_electronico','telefono_adicional','periodo','campania'];
+const INTER_NOTAS_COLS = ['ID','Notes'];
+
+const INTER_CARI_FIXED_ROWS = [
+  {
+    'numero_telefono': '573332322810',
+    'nombre_aspirante': 'Esteban',
+    'carrera_interes': 'especializacion en contratacion estatal',
+    'identificacion': 'Sin documento',
+    'correo_electronico': 'Prueba@gmail.com',
+    'telefono_adicional': '573332322810',
+    'periodo': 'Virtual/pregrado',
+    'campania': 'Organico'
+  },
+  {
+    'numero_telefono': '573134268590',
+    'nombre_aspirante': 'Diguar',
+    'carrera_interes': 'ingenieria de sistemas',
+    'identificacion': 'Sin documento',
+    'correo_electronico': 'Prueba@gmail.com',
+    'telefono_adicional': '573134268590',
+    'periodo': 'Virtual/pregrado',
+    'campania': 'Organico'
+  }
+];
+
+const INTER_NOTA_FIJA = 'Se intenta contacto con el aspirante via CARI AI';
+
+function updateInterCariInfo(){
+  const el = document.getElementById('inter-cari-info');
+  if(el) el.textContent = interFiltered.length.toLocaleString() + ' registros listos para CARI AI (filtro activo)';
+}
+
+function updateInterNotasInfo(){
+  const el = document.getElementById('inter-notas-info');
+  if(el) el.textContent = interFiltered.length.toLocaleString() + ' notas listas para generar (filtro activo)';
+}
+
+function getInterCariPhone(row){
+  const tel = normalizarTelefono(row['Telefono'] || row['Teléfono'] || '');
+  if(!tel) return '';
+  return tel.startsWith('57') ? tel : '57' + tel;
+}
+
+function getInterCariPeriodo(row){
+  const area = String(row['AREA VALIDA'] || '').trim().toUpperCase();
+  return area === 'POSGRADO' ? 'Virtual/Especializacion' : 'Virtual/pregrado';
+}
+
+function buildInterCariRows(){
+  const rows = interFiltered.map(function(r){
+    const phone = getInterCariPhone(r);
+    const doc   = String(r['Número de Documento'] || r['Numero de Documento'] || '').trim();
+    return {
+      'numero_telefono'   : phone,
+      'nombre_aspirante'  : r['Nombre completo'] || '',
+      'carrera_interes'   : String(r['PROGRAMA NORMALIZADO'] || r['Programa de interes_'] || r['Programa'] || '').toLowerCase(),
+      'identificacion'    : doc || 'Sin documento',
+      'correo_electronico': r['Correo electrónico'] || r['Correo electronico'] || '',
+      'telefono_adicional': phone,
+      'periodo'           : getInterCariPeriodo(r),
+      'campania'          : 'Organico'
+    };
+  });
+  return INTER_CARI_FIXED_ROWS.concat(rows);
+}
+
+function buildInterNotasRows(){
+  return interFiltered.map(function(r){
+    return { 'ID': getInterLeadId(r), 'Notes': INTER_NOTA_FIJA };
+  });
+}
+
+function renderInterCari(){
+  const rows = buildInterCariRows();
+  const wrap = document.getElementById('inter-cari-preview');
+  const tbl  = document.getElementById('inter-cari-tbl');
+  if(!wrap || !tbl) return;
+  wrap.style.display = 'block';
+  const preview = rows.slice(0, 300);
+  tbl.innerHTML = '<thead><tr>' + INTER_CARI_COLS.map(function(c){ return '<th>' + c + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    preview.map(function(r){ return '<tr>' + INTER_CARI_COLS.map(function(c){
+      var v = escapeHtml(String(r[c] != null ? r[c] : ''));
+      return '<td title="' + v + '">' + v + '</td>';
+    }).join('') + '</tr>'; }).join('') + '</tbody>';
+  if(rows.length > 300){
+    tbl.innerHTML += '<caption style="caption-side:bottom;padding:8px;color:#777">Vista previa de 300 registros de ' + rows.length.toLocaleString() + '</caption>';
+  }
+  updateInterCariInfo();
+}
+
+function renderInterNotas(){
+  const rows = buildInterNotasRows();
+  const wrap = document.getElementById('inter-notas-preview');
+  const tbl  = document.getElementById('inter-notas-tbl');
+  if(!wrap || !tbl) return;
+  wrap.style.display = 'block';
+  const preview = rows.slice(0, 300);
+  tbl.innerHTML = '<thead><tr>' + INTER_NOTAS_COLS.map(function(c){ return '<th>' + c + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    preview.map(function(r){ return '<tr>' + INTER_NOTAS_COLS.map(function(c){
+      var v = escapeHtml(String(r[c] != null ? r[c] : ''));
+      return '<td title="' + v + '">' + v + '</td>';
+    }).join('') + '</tr>'; }).join('') + '</tbody>';
+  if(rows.length > 300){
+    tbl.innerHTML += '<caption style="caption-side:bottom;padding:8px;color:#777">Vista previa de 300 notas de ' + rows.length.toLocaleString() + '</caption>';
+  }
+  updateInterNotasInfo();
+}
+
+function exportInterCari(){
+  const rows = buildInterCariRows();
+  if(!rows.length){ showToast('No hay registros CARI AI para exportar.'); return; }
+  const ws = XLSX.utils.json_to_sheet(rows.map(function(r){
+    const o = {};
+    INTER_CARI_COLS.forEach(function(c){ o[c] = r[c] != null ? r[c] : ''; });
+    return o;
+  }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'CARI AI');
+  var stamp = typeof getDateStamp === 'function' ? getDateStamp() : '';
+  XLSX.writeFile(wb, 'INTERESADOS_' + stamp + '.xlsx');
+  showToast('⬇ ' + rows.length.toLocaleString() + ' registros CARI AI exportados');
+}
+
+function exportInterNotas(){
+  const rows = buildInterNotasRows();
+  if(!rows.length){ showToast('No hay notas para exportar.'); return; }
+  const ws = XLSX.utils.json_to_sheet(rows.map(function(r){
+    const o = {};
+    INTER_NOTAS_COLS.forEach(function(c){ o[c] = r[c] != null ? r[c] : ''; });
+    return o;
+  }));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Notas');
+  var stamp     = typeof getDateStamp     === 'function' ? getDateStamp()     : '';
+  var fileLabel = typeof getInterFileLabel === 'function' ? getInterFileLabel() : '';
+  XLSX.writeFile(wb, 'ASIGNACION ' + stamp + ' INTER' + fileLabel + '.xlsx');
+  showToast('⬇ ' + rows.length.toLocaleString() + ' notas exportadas');
+}
+
+function copiarInterNotasIDs(){
+  const rows = buildInterNotasRows();
+  navigator.clipboard.writeText(rows.map(function(r){ return r['ID']; }).join('\n'))
+    .then(function(){ showToast('📋 ' + rows.length.toLocaleString() + ' IDs copiados'); });
 }

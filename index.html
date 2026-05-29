@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+﻿﻿<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -297,6 +297,8 @@
     <div class="tab active" onclick="switchInterTab(0)">🤖 Predictivo</div>
     <div class="tab" onclick="switchInterTab(1)">⭐ Base Interesados</div>
     <div class="tab" onclick="switchInterTab(2)">👥 Distribución de Leads</div>
+    <div class="tab" onclick="switchInterTab(3)">🤖 Distribución CARI AI</div>
+    <div class="tab" onclick="switchInterTab(4)">📝 Notas CARI AI</div>
   </div>
 
   <div class="tab-panel active inter-panel hidden" id="inter-tp-0">
@@ -412,6 +414,47 @@
 
 
 
+  </div>
+
+  </div>
+
+  <div class="tab-panel inter-panel hidden" id="inter-tp-3">
+    <div class="card2">
+      <h2><span class="step-n">1</span> Distribuci&#243;n CARI AI</h2>
+      <p>Se genera con los registros filtrados de Base Interesados.</p>
+      <div id="inter-cari-info" style="font-size:.84rem;color:var(--cun-verde);font-weight:700;"></div>
+    </div>
+    <div class="card2">
+      <h2><span class="step-n">2</span> Exportar base CARI AI</h2>
+      <p>Campos: numero_telefono, nombre_aspirante, carrera_interes, identificacion, correo_electronico, telefono_adicional, periodo y campania.</p>
+      <div class="acts">
+        <button class="btn btn-primary" onclick="renderInterCari()">&#128065;&#65039; Ver CARI AI</button>
+        <button class="btn btn-green" onclick="exportInterCari()">&#8659; Exportar CARI AI</button>
+      </div>
+    </div>
+    <div id="inter-cari-preview" style="padding:0 20px 20px;display:none;overflow:auto;max-height:520px;background:white;">
+      <table id="inter-cari-tbl" style="width:100%;border-collapse:collapse;font-size:.73rem;"></table>
+    </div>
+  </div>
+
+  <div class="tab-panel inter-panel hidden" id="inter-tp-4">
+    <div class="card2">
+      <h2><span class="step-n">1</span> Notas CARI AI</h2>
+      <p>Se genera una nota fija para cada ID filtrado.</p>
+      <div id="inter-notas-info" style="font-size:.84rem;color:var(--cun-verde);font-weight:700;"></div>
+    </div>
+    <div class="card2">
+      <h2><span class="step-n">2</span> Exportar notas</h2>
+      <p>Campos: ID y Notes. La nota siempre ser&#225;: <strong>Se intenta contacto con el aspirante via CARI AI</strong></p>
+      <div class="acts">
+        <button class="btn btn-primary" onclick="renderInterNotas()">&#128065;&#65039; Ver notas</button>
+        <button class="btn btn-green" onclick="exportInterNotas()">&#8659; Exportar notas</button>
+        <button class="btn btn-orange" onclick="copiarInterNotasIDs()">&#128203; Copiar IDs notas</button>
+      </div>
+    </div>
+    <div id="inter-notas-preview" style="padding:0 20px 20px;display:none;overflow:auto;max-height:520px;background:white;">
+      <table id="inter-notas-tbl" style="width:100%;border-collapse:collapse;font-size:.73rem;"></table>
+    </div>
   </div>
 </section>
 

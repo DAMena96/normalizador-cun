@@ -309,6 +309,29 @@ const SG_CARI_FIXED_ROWS = [
   }
 ];
 
+/* ── Fila fija inicial para todos los predictivos ──
+   CONTACTID=1 siempre; AgentName = aleatorio entre los agentes de los datos reales.
+   Llama a esta función DESPUÉS de haber construido los rows reales (idx+1 → idx+2). */
+function buildPredFirstRow(realRows){
+  var agents = (realRows || [])
+    .map(function(r){ return String(r['AgentName'] || '').trim(); })
+    .filter(Boolean);
+  var randomAgent = agents.length
+    ? agents[Math.floor(Math.random() * agents.length)]
+    : '';
+  return {
+    'CONTACTID' : 1,
+    'Prioridad' : 1,
+    'email'     : 'julio_bra@gmail.com',
+    'First_name': 'Julio',
+    'telefono'  : '3208345470',
+    'Programa'  : 'INGENIRÍA DE SISTEMAS',
+    'number 1'  : '+5793208345470',
+    'AgentName' : randomAgent,
+    'ValCorreo' : 'VALIDADO'
+  };
+}
+
 function updateSGCariInfo(){
   const el = document.getElementById('sg-cari-info');
   if(el) el.textContent = `${filteredData.length.toLocaleString()} registros listos para CARI AI (filtro activo)`;
